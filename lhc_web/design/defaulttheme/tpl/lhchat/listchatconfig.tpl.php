@@ -98,6 +98,12 @@
                 <?php $attribute = 'tracked_footprint_cleanup'?>
                 <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
 
+                <?php $attribute = 'departament_availability'?>
+                <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'uonline_sessions'?>
+                <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
             </div>
 
 			<div role="tabpanel" class="tab-pane" id="misc">
@@ -147,7 +153,9 @@
     		    		    
     		    <?php $attribute = 'allow_reopen_closed';$boolValue = true;?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
-    		   			     		    
+
+                <?php include(erLhcoreClassDesign::designtpl('lhchat/part/listchatconfig/reverse_order_pending.tpl.php'));?>
+
     		    <?php $attribute = 'min_phone_length';?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    
@@ -158,7 +166,10 @@
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    
     		    <?php $attribute = 'accept_chat_link_timeout'?>
-    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>	
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+    		    <?php $attribute = 'open_closed_chat_timeout'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    
     		    <?php $attribute = 'activity_timeout'?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>	
@@ -176,7 +187,13 @@
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?> 
     		    
     		    <?php $attribute = 'mheight'?>
-    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?> 
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'mheight_op'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'listd_op'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    
     		    <?php $attribute = 'hide_disabled_department';$boolValue = true;?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
@@ -190,6 +207,7 @@
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/listchatconfig/suggest_leave_msg.tpl.php'));?>
     		    
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/listchatconfig/text_misc.tpl.php'));?>
+
     		    <?php $attribute = 'voting_days_limit'?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		     
@@ -206,6 +224,15 @@
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    <hr>		    
     		    <?php $attribute = 'autoclose_timeout'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'autoclose_timeout_pending'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'autoclose_timeout_active'?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'autoclose_timeout_bot'?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    
     		    <?php $attribute = 'autopurge_timeout'?>

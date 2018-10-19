@@ -37,6 +37,7 @@ return array_merge(array (
         'erLhcoreClassGroup'        => 'lib/core/lhuser/lhgroup.php',
         'erLhcoreClassChat'         => 'lib/core/lhchat/lhchat.php',
 		'erLhcoreClassChatWorkflow' => 'lib/core/lhchat/lhchatworkflow.php',
+		'erLhcoreClassChatCleanup'  => 'lib/core/lhchat/lhchatcleanup.php',
         'erLhcoreClassChatValidator'=> 'lib/core/lhchat/lhchatvalidator.php',
         'erLhcoreClassAdminChatValidatorHelper'=> 'lib/core/lhchat/lhchatadminvalidatorhelper.php',
         'erLhcoreClassChatCommand'=> 'lib/core/lhchat/lhchatcommand.php',
@@ -111,8 +112,11 @@ return array_merge(array (
 		'erLhAbstractModelEmailTemplate' 			      => 'lib/models/lhabstract/erlhabstractmodelemailtemplate.php',
 		'erLhAbstractModelProactiveChatInvitation'        => 'lib/models/lhabstract/erlhabstractmodeleproactivechatinvitation.php',
 		'erLhAbstractModelProactiveChatInvitationEvent'   => 'lib/models/lhabstract/erlhabstractmodeleproactivechatinvitationevent.php',
-		'erLhAbstractModelProactiveChatVariables'   => 'lib/models/lhabstract/erlhabstractmodeleproactivechatvariables.php',
-		'erLhAbstractModelProactiveChatEvent'       => 'lib/models/lhabstract/erlhabstractmodeleproactivechatevent.php',
+		'erLhAbstractModelProactiveChatVariables'           => 'lib/models/lhabstract/erlhabstractmodeleproactivechatvariables.php',
+		'erLhAbstractModelProactiveChatEvent'               => 'lib/models/lhabstract/erlhabstractmodeleproactivechatevent.php',
+		'erLhAbstractModelProactiveChatCampaign'            => 'lib/models/lhabstract/erlhabstractmodeleproactivechatcampaign.php',
+		'erLhAbstractModelProactiveChatCampaignConversion'  => 'lib/models/lhabstract/erlhabstractmodelproactivechatcampaignconv.php',
+
 		'erLhAbstractModelAutoResponder'  			=> 'lib/models/lhabstract/erlhabstractmodelautoresponder.php',
 		'erLhAbstractModelAutoResponderChat'  		=> 'lib/models/lhabstract/erlhabstractmodelautoresponderchat.php',
     
@@ -216,7 +220,8 @@ return array_merge(array (
         'erLhcoreClassModelSpeechLanguage'          => 'lib/models/lhspeech/erlhcoreclassmodelspeechlanguage.php',
         'erLhcoreClassModelSpeechLanguageDialect'   => 'lib/models/lhspeech/erlhcoreclassmodelspeechlanguagedialect.php',
         'erLhcoreClassModelSpeechChatLanguage'      => 'lib/models/lhspeech/erlhcoreclassmodelspeechchatlanguage.php',
-    
+        'erLhcoreClassModelSpeechUserLanguage'      => 'lib/models/lhspeech/erlhcoreclassmodelspeechuserlanguage.php',
+
 		// Co browse
 		'erLhcoreClassCoBrowse' 					=> 'lib/core/lhcobrowse/lhcobrowse.php',
 		'erLhcoreClassModelCoBrowse' 				=> 'lib/models/lhcobrowse/erlhcoreclassmodelcobrowse.php',
@@ -257,6 +262,7 @@ return array_merge(array (
         'erLhcoreClassGenericBotActionTyping'       => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactiontyping.php',
 		'erLhcoreClassGenericBotActionProgress'     => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionprogress.php',
 		'erLhcoreClassGenericBotActionVideo'        => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionvideo.php',
+		'erLhcoreClassGenericBotActionAttribute'    => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionattribute.php',
 
         // Notifications
         'erLhcoreClassNotifications'                => 'lib/core/lhnotifications/lhnotifications.php',

@@ -1195,6 +1195,26 @@
                 "extra": ""
             }
         ],
+        "lh_abstract_proactive_chat_campaign": [
+            {
+                "field": "id",
+                "type": "bigint(20)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": "auto_increment"
+            }
+        ],
+        "lh_abstract_proactive_chat_campaign_conv": [
+            {
+                "field": "id",
+                "type": "bigint(20)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": "auto_increment"
+            }
+        ],
         "lh_chat_paid": [
             {
                 "field": "id",
@@ -1504,7 +1524,7 @@
                 "type": "longtext",
                 "null": "NO",
                 "key": "",
-                "default": "0",
+                "default": "",
                 "extra": "",
                 "collation": "utf8mb4_unicode_ci"
             },
@@ -1513,7 +1533,16 @@
                 "type": "longtext",
                 "null": "NO",
                 "key": "",
-                "default": "0",
+                "default": "",
+                "extra": "",
+                "collation": "utf8mb4_unicode_ci"
+            },
+            {
+                "field": "css_attributes",
+                "type": "longtext",
+                "null": "NO",
+                "key": "",
+                "default": "",
                 "extra": "",
                 "collation": "utf8mb4_unicode_ci"
             },
@@ -1522,7 +1551,7 @@
                 "type": "longtext",
                 "null": "NO",
                 "key": "",
-                "default": "0",
+                "default": "",
                 "extra": "",
                 "collation": "utf8mb4_unicode_ci"
             },
@@ -1531,7 +1560,7 @@
                 "type": "text",
                 "null": "NO",
                 "key": "",
-                "default": "0",
+                "default": "",
                 "extra": "",
                 "collation": "utf8mb4_unicode_ci"
             },
@@ -1540,7 +1569,7 @@
                 "type": "text",
                 "null": "NO",
                 "key": "",
-                "default": "0",
+                "default": "",
                 "extra": "",
                 "collation": "utf8mb4_unicode_ci"
             }
@@ -2289,6 +2318,22 @@
                 "extra": ""
             },
             {
+                "field": "campaign_id",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "disabled",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "MUL",
+                "default": null,
+                "extra": ""
+            },
+            {
                 "field": "trigger_id",
                 "type": "int(11)",
                 "null": "NO",
@@ -2528,6 +2573,14 @@
                 "key": "",
                 "default": null,
                 "extra": ""
+            },
+            {
+                "field": "design_data",
+                "type": "longtext",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
             }
         ],
         "lh_abstract_widget_theme": [
@@ -2577,6 +2630,15 @@
             },
             {
                 "field": "pending_join",
+                "type": "varchar(250)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": "",
+                "collation": "utf8mb4_unicode_ci"
+            },
+            {
+                "field": "pending_join_queue",
                 "type": "varchar(250)",
                 "null": "NO",
                 "key": "",
@@ -3459,6 +3521,14 @@
             },
             {
                 "field": "status",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "MUL",
+                "default": "0",
+                "extra": ""
+            },
+            {
+                "field": "invitation_id",
                 "type": "int(11)",
                 "null": "NO",
                 "key": "MUL",
@@ -4388,6 +4458,14 @@
                 "extra": ""
             },
             {
+                "field": "conversion_id",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
                 "field": "user_active",
                 "type": "int(11)",
                 "null": "NO",
@@ -4786,6 +4864,16 @@
                 "extra": ""
             }
         ],
+        "lh_speech_user_language": [
+            {
+                "field": "id",
+                "type": "bigint(20)",
+                "null": "NO",
+                "key": "PRI",
+                "default": null,
+                "extra": "auto_increment"
+            }
+        ],
         "lh_departament_group_member": [
             {
                 "field": "id",
@@ -4939,6 +5027,14 @@
             },
             {
                 "field": "pending_max",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
+            },
+            {
+                "field": "assign_same_language",
                 "type": "int(11)",
                 "null": "NO",
                 "key": "",
@@ -6657,6 +6753,14 @@
                 "key": "",
                 "default": null,
                 "extra": ""
+            },
+            {
+                "field": "pswd_updated",
+                "type": "int(11)",
+                "null": "NO",
+                "key": "",
+                "default": null,
+                "extra": ""
             }
         ],
         "lh_users_remember": [
@@ -6803,6 +6907,16 @@
                 "attribute": ""
             },
             {
+                "identifier": "ocountry",
+                "class": "",
+                "attribute": ""
+            },
+            {
+                "identifier": "otime_on_site",
+                "class": "",
+                "attribute": ""
+            },
+            {
                 "identifier": "o_department",
                 "class": "",
                 "attribute": ""
@@ -6867,6 +6981,13 @@
                 "value": "300",
                 "type": "0",
                 "explain": "How many seconds chat accept link is valid. Set 0 to force login all the time manually.",
+                "hidden": "0"
+            },
+            {
+                "identifier": "open_closed_chat_timeout",
+                "value": "1800",
+                "type": "0",
+                "explain": "How many seconds customer has to open already closed chat.",
                 "hidden": "0"
             },
             {
@@ -6975,6 +7096,13 @@
                 "hidden": "0"
             },
             {
+                "identifier": "reverse_pending",
+                "value": "0",
+                "type": "0",
+                "explain": "Make default pending chats order from old to new",
+                "hidden": "0"
+            },
+            {
                 "identifier": "allow_reopen_closed",
                 "value": "1",
                 "type": "0",
@@ -7007,6 +7135,27 @@
                 "value": "0",
                 "type": "0",
                 "explain": "Automatic chats closing. 0 - disabled, n > 0 time in minutes before chat is automatically closed",
+                "hidden": "0"
+            },
+            {
+                "identifier": "autoclose_timeout_pending",
+                "value": "0",
+                "type": "0",
+                "explain": "Automatic pending chats closing. 0 - disabled, n > 0 time in minutes before chat is automatically closed",
+                "hidden": "0"
+            },
+            {
+                "identifier": "autoclose_timeout_active",
+                "value": "0",
+                "type": "0",
+                "explain": "Automatic active chats closing. 0 - disabled, n > 0 time in minutes before chat is automatically closed",
+                "hidden": "0"
+            },
+            {
+                "identifier": "autoclose_timeout_bot",
+                "value": "0",
+                "type": "0",
+                "explain": "Automatic bot chats closing. 0 - disabled, n > 0 time in minutes before chat is automatically closed",
                 "hidden": "0"
             },
             {
@@ -7192,6 +7341,13 @@
                 "hidden": "1"
             },
             {
+                "identifier": "password_data",
+                "value": "",
+                "type": "0",
+                "explain": "Password requirements",
+                "hidden": "1"
+            },
+            {
                 "identifier": "hide_disabled_department",
                 "value": "1",
                 "type": "0",
@@ -7360,10 +7516,31 @@
                 "hidden": "1"
             },
             {
+                "identifier": "recaptcha_data",
+                "value": "",
+                "type": "0",
+                "explain": "Re-captcha configuration",
+                "hidden": "1"
+            },
+            {
                 "identifier": "sound_invitation",
                 "value": "1",
                 "type": "0",
                 "explain": "Play sound on invitation to chat.",
+                "hidden": "0"
+            },
+            {
+                "identifier": "departament_availability",
+                "value": "364",
+                "type": "0",
+                "explain": "How long department availability statistic should be kept? (days)",
+                "hidden": "0"
+            },
+            {
+                "identifier": "uonline_sessions",
+                "value": "364",
+                "type": "0",
+                "explain": "How long keep operators online sessions data? (days)",
                 "hidden": "0"
             },
             {
@@ -7420,6 +7597,20 @@
                 "value": "",
                 "type": "0",
                 "explain": "Messages box height",
+                "hidden": "0"
+            },
+            {
+                "identifier": "mheight_op",
+                "value": "200",
+                "type": "0",
+                "explain": "Messages box height for operator",
+                "hidden": "0"
+            },
+            {
+                "identifier": "listd_op",
+                "value": "10",
+                "type": "0",
+                "explain": "Default number of online operators to show",
                 "hidden": "0"
             },
             {
@@ -8408,6 +8599,12 @@
     			"dynamic_invitation" : "ALTER TABLE `lh_abstract_proactive_chat_invitation` ADD INDEX `dynamic_invitation` (`dynamic_invitation`);"
     		},
     		"old" : []
+    	},
+        "lh_abstract_proactive_chat_campaign_conv" : {
+    		"new" : {
+    			"ctime" : "ALTER TABLE `lh_abstract_proactive_chat_campaign_conv` ADD INDEX `ctime` (`ctime`);"
+    		},
+    		"old" : []
     	}
     },
     "tables_create": {
@@ -8486,6 +8683,9 @@
         "lh_generic_bot_payload": "CREATE TABLE `lh_generic_bot_payload` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `name` varchar(100) NOT NULL, `payload` varchar(100) NOT NULL, `bot_id` int(11) NOT NULL, `trigger_id` int(11) NOT NULL, PRIMARY KEY (`id`), KEY `bot_id` (`bot_id`), KEY `trigger_id` (`trigger_id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
         "lh_generic_bot_chat_workflow": "CREATE TABLE `lh_generic_bot_chat_workflow` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `chat_id` bigint(20) NOT NULL, `time` int(11) NOT NULL, `trigger_id` bigint(20) NOT NULL, `identifier` varchar(100) NOT NULL, `status` int(11) NOT NULL, `collected_data` text, PRIMARY KEY (`id`), KEY `chat_id` (`chat_id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
         "lh_generic_bot_chat_event": "CREATE TABLE `lh_generic_bot_chat_event` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `chat_id` bigint(20) NOT NULL, `content` longtext NOT NULL, `ctime` int(11) NOT NULL, PRIMARY KEY (`id`), KEY `chat_id` (`chat_id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-        "lh_notification_subscriber": "CREATE TABLE `lh_notification_subscriber` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `chat_id` bigint(20) NOT NULL, `online_user_id` bigint(20) NOT NULL, `dep_id` int(11) NOT NULL,`theme_id` int(11) NOT NULL, `ctime` int(11) NOT NULL, `utime` int(11) NOT NULL, `status` int(11) NOT NULL, `params` text NOT NULL, `device_type` tinyint(1) NOT NULL,`subscriber_hash` varchar(50) NOT NULL, `uagent` varchar(250) NOT NULL, `ip` varchar(250) NOT NULL, `last_error` text NOT NULL, PRIMARY KEY (`id`), KEY `chat_id` (`chat_id`), KEY `dep_id` (`dep_id`), KEY `online_user_id` (`online_user_id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+        "lh_notification_subscriber": "CREATE TABLE `lh_notification_subscriber` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `chat_id` bigint(20) NOT NULL, `online_user_id` bigint(20) NOT NULL, `dep_id` int(11) NOT NULL,`theme_id` int(11) NOT NULL, `ctime` int(11) NOT NULL, `utime` int(11) NOT NULL, `status` int(11) NOT NULL, `params` text NOT NULL, `device_type` tinyint(1) NOT NULL,`subscriber_hash` varchar(50) NOT NULL, `uagent` varchar(250) NOT NULL, `ip` varchar(250) NOT NULL, `last_error` text NOT NULL, PRIMARY KEY (`id`), KEY `chat_id` (`chat_id`), KEY `dep_id` (`dep_id`), KEY `online_user_id` (`online_user_id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "lh_speech_user_language": "CREATE TABLE `lh_speech_user_language` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `user_id` bigint(20) NOT NULL, `language` varchar(20) NOT NULL, PRIMARY KEY (`id`), KEY `user_id_language` (`user_id`,`language`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "lh_abstract_proactive_chat_campaign": "CREATE TABLE `lh_abstract_proactive_chat_campaign` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `name` varchar(50) NOT NULL, `text` text NOT NULL, PRIMARY KEY (`id`)) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "lh_abstract_proactive_chat_campaign_conv": "CREATE TABLE `lh_abstract_proactive_chat_campaign_conv` ( `id` bigint(20) NOT NULL AUTO_INCREMENT, `device_type` tinyint(1) NOT NULL, `invitation_type` tinyint(1) NOT NULL,`invitation_status` tinyint(1) NOT NULL,`chat_id` bigint(20) NOT NULL, `campaign_id` int(11) NOT NULL,`invitation_id` int(11) NOT NULL,`department_id` int(11) NOT NULL,`ctime` int(11) NOT NULL,`con_time` int(11) NOT NULL, `vid_id` bigint(20) DEFAULT NULL, PRIMARY KEY (`id`), KEY `campaign_id` (`campaign_id`), KEY `invitation_id` (`invitation_id`), KEY `invitation_status` (`invitation_status`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
     }
 }

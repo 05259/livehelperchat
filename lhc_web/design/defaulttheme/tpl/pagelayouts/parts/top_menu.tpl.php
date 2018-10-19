@@ -14,12 +14,14 @@
         <span class="sr-only"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('pagelayout/pagelayout','Menu');?></span>
         <i class="material-icons mr-0">menu</i>
       </button>
+
+      <div ng-cloak class="version-updated pull-left" ng-if="lhc.lhcPendingRefresh == true"><i class="material-icons">update</i><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('pagelayout/pagelayout','This window will be automatically refreshed in {{lhc.lhcVersionCounter}} seconds due to a version update.');?></div>
     </div>
       <div class="collapse navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">    
           <ul class="nav navbar-nav navbar-inline">   
         	 <?php include(erLhcoreClassDesign::designtpl('pagelayouts/parts/top_menu_chat_actions_pre.tpl.php'));?>    	 
              <?php if ($parts_top_menu_chat_actions_enabled == true && $currentUser->hasAccessTo('lhchat','allowchattabs')) : ?>
-                <li class="li-icon"><a title="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('pagelayout/pagelayout','Chat tabs');?>" href="javascript:void(0)" onclick="javascript:lhinst.chatTabsOpen()"><i class="material-icons">chat</i></a></li>		
+                <li class="li-icon"><a title="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('pagelayout/pagelayout','Chat tabs');?>" href="#" onclick="javascript:lhinst.chatTabsOpen()"><i class="material-icons">chat</i></a></li>
              <?php endif;?>
     
         	 <?php if ($currentUser->hasAccessTo('lhsystem','use')) : ?>

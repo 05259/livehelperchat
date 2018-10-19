@@ -4,6 +4,8 @@ $tpl = erLhcoreClassTemplate::getInstance('lhtheme/adminthemeedit.tpl.php');
 
 $form = erLhAbstractModelAdminTheme::fetch((int)$Params['user_parameters']['id']);
 
+$fields = include 'lib/core/lhabstract/fields/erlhabstractmodeladmintheme.php';
+
 if ( isset($_POST['CancelAction']) ) {
 	erLhcoreClassModule::redirect('theme/adminthemes');
 	exit;
@@ -13,9 +15,11 @@ if (ezcInputForm::hasPostData())
 {
     $Errors = erLhcoreClassThemeValidator::validateAdminTheme($form);
 
-	if (count($Errors) == 0)
+    $ErrorsAbstract = erLhcoreClassAbstract::validateInput($form);
+
+	if (count($Errors) == 0 && count($ErrorsAbstract) == 0)
 	{
-	    $form->saveThis();
+	    $form->saveOrUpdate();
 	    
 		if (isset($_POST['SaveAction'])) {
 			erLhcoreClassModule::redirect('theme/adminthemes');
@@ -24,13 +28,17 @@ if (ezcInputForm::hasPostData())
 			$tpl->set('updated',true);
 		}
 
-	}  else {
-		$tpl->set('errors',$Errors);
+	} else {
+		$tpl->set('errors',array_merge($Errors,$ErrorsAbstract));
 	}
 }
 
+$tpl->set('fields',$fields);
 $tpl->set('form',$form);
+
 $Result['additional_footer_js'] = '<script src="'.erLhcoreClassDesign::designJS('js/admintheme.form.angular.js').'"></script>';
+$Result['additional_header_js'] = '<script src="'.erLhcoreClassDesign::designJS('js/colorpicker.js').'"></script>';
+$Result['additional_header_css'] = '<link rel="stylesheet" type="text/css" href="'.erLhcoreClassDesign::designCSS('css/colorpicker.css').'" />';
 
 $Result['content'] = $tpl->fetch();
 $Result['path'] = array(

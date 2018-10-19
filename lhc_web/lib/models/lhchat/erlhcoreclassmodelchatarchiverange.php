@@ -99,8 +99,13 @@ class erLhcoreClassModelChatArchiveRange
             $stmt = $q->prepare();
             $stmt->execute();
 
+            // Delete auto responder
+            $q->deleteFrom( 'lh_abstract_auto_responder_chat' )->where( $q->expr->eq( 'chat_id', $item->id ) );
+            $stmt = $q->prepare();
+            $stmt->execute();
+
             // Dispatch event if chat is archived
-            erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.archived',array('chat' => & $item));
+            erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.archived',array('chat' => & $item, 'archive' => $this));
 
             erLhcoreClassChat::getSession()->delete($item);
 
@@ -126,6 +131,8 @@ class erLhcoreClassModelChatArchiveRange
     {
         erLhcoreClassModelChatArchive::$dbTable = self::$archiveTable = "lh_chat_archive_{$this->id}";
         erLhcoreClassModelChatArchiveMsg::$dbTable = self::$archiveMsgTable = "lh_chat_archive_msg_{$this->id}";
+        
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.set_archive_tables', array('archive' => & $this));
     }
 
     public function __get($var)
@@ -251,6 +258,8 @@ class erLhcoreClassModelChatArchiveRange
             $command = str_replace("`lh_msg`", "`lh_chat_archive_msg_{$this->id}`", $command);
             $db->query($command);
         }
+
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.create_archive', array('archive' => & $this));
 
         return $this->id;
     }

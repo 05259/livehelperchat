@@ -1,3 +1,85 @@
+3.09v
+
+1. Password requirements configuration options
+2. Option to have expirable password so after n days operators would have to change their password.
+
+execute doc/update_db/update_184.sql for update
+
+3.08v
+
+1. Back office styling options
+2. Option to have custom default messages box height
+3. option to have custom default operators number in list
+
+execute doc/update_db/update_183.sql for update
+
+3.07v
+
+1. Google re-captcha option for login page.
+
+execute doc/update_db/update_182.sql for update
+
+3.06v
+
+1. Option to have custom text in themes for text like "You are number {number} in the queue. Please wait..."
+2. Option to set default order for pending chats. Chat configuration -> Misc -> "Make default pending chats order from old to new"
+3. Proactive invitation feature to have custom design for proactive invitation. Still not completed. But fields is presented already.
+Proactive invitations if have same priority will be used randmonly. So A/B testing will make sense.
+4. Gulp library updated.
+
+execute doc/update_db/update_181.sql for update
+
+3.05v
+
+1. Filter online visitors by Country and Time On Site
+
+execute doc/update_db/update_180.sql for update
+
+3.04v
+
+1. Proactive campaigns will be kept as long as online visitors records.
+2. Option to configure how long to keep department availability statistic.
+
+execute doc/update_db/update_179.sql for update
+
+3.03v
+
+1. Proactive chats A/B testing with campaign feature
+2. Proactive chat efficiency tracking statistic. To track conversion rate.
+
+execute doc/update_db/update_178.sql for update
+
+3.02v
+
+1. Chat lists will include proactive invitation filtering options
+2. Statistic windows also will include invitation filtering options
+
+execute doc/update_db/update_177.sql for update
+
+3.01v
+
+1. Auto assign enhancement. It can try to assign chats matching operators languages first. It can be per department enable/disabled
+2. Auto refresh window for operators then version is updated.
+
+execute doc/update_db/update_176.sql for update
+
+3.00v
+
+1. Various bot enhancements. Attribute element.
+2. Option to setup automatic chat closing for active/pending/bot chats.
+Responsible cron
+php cron.php -s site_admin -c cron/workflow
+3. Additional data attribute included in XLS export
+4. Auto responder can send bot custom message.
+5. Video type for bot
+6. Allow to see generated bot syntax from bot builder interface
+7. Option to have auto uppercase sentences in operator interface.
+8. Rest api enhancements
+9. Option to set how long chat can be opened after he was closed.
+10. Show correct online status on widget minimization.
+
+execute doc/update_db/update_175.sql for update
+
 2.99v
 
 1. New themes could not be saved.

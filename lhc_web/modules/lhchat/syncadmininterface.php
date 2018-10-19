@@ -187,7 +187,7 @@ if ($activeTabEnabled == true) {
 	    $db->query('UPDATE `lh_chat` SET `status_sub_sub` = 0 WHERE `id` IN (' . implode(',', $transferedArray) . ')');
 	}
 
-	erLhcoreClassChat::prefillGetAttributes($chats,array('time_created_front','department_name','plain_user_name','product_name'),array('product_id','product','department','time','status','user_id','user'));
+	erLhcoreClassChat::prefillGetAttributes($chats,array('time_created_front','department_name','plain_user_name','product_name','n_official','n_off_full'),array('product_id','product','department','time','status','user_id','user'));
 	$ReturnMessages['active_chats'] = array('list' => array_values($chats));	
 	$chatsList[] = & $ReturnMessages['active_chats']['list'];
 }
@@ -503,7 +503,9 @@ if ($activeTabEnabled == true && isset($Params['user_parameters_unordered']['top
     $my_active_chats = array_values($activeMyChats);
 }
 
-erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.syncadmininterface',array('lists' => & $ReturnMessages));
+$version = erLhcoreClassUpdate::LHC_RELEASE;
+
+erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.syncadmininterface',array('lists' => & $ReturnMessages, 'v' => & $version));
 
 $ou = '';
 if ($userData->operation_admin != '') {
@@ -512,7 +514,7 @@ if ($userData->operation_admin != '') {
     erLhcoreClassUser::getSession()->update($userData);
 }
 
-$responseSync = array('error' => 'false', 'mac' => $my_active_chats, 'ou' => $ou, 'result' => $ReturnMessages, 'ho' => $userData->hide_online, 'im' => $userData->invisible_mode);
+$responseSync = array('v' => $version, 'error' => 'false', 'mac' => $my_active_chats, 'ou' => $ou, 'result' => $ReturnMessages, 'ho' => $userData->hide_online, 'im' => $userData->invisible_mode);
 
 if (isset($currentOp) && $currentOp !== null) {
     $responseSync['ho'] = $currentOp->hide_online;

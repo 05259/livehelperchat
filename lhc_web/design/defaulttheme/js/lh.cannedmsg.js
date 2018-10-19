@@ -15,6 +15,9 @@ var LHCCannedMessageAutoSuggest = (function() {
 		this.nextUppercaseCallback = null;
 		this.nextUppercaseEnabled = typeof params['uppercase_enabled'] === 'undefined' || params['uppercase_enabled'] == true;
 
+		// Store current request
+		this.currentRequest = null;
+
         // General one
 		var _that = this;
 		
@@ -33,7 +36,6 @@ var LHCCannedMessageAutoSuggest = (function() {
                     _that.capitalizeSentences(evt);
                 }
 			}
-
 
 			if (evt.key == '#' || evt.keyCode == 51 || evt.keyCode == 222) {	
 				_that.currentText = _that.textarea.val();				
@@ -159,21 +161,44 @@ var LHCCannedMessageAutoSuggest = (function() {
 			var prev = current.prev();			
 			if (prev.is('li')){
 				current.removeClass('current-item');
-				prev.addClass('current-item');
+                current = prev.addClass('current-item');
 			} else {
-                current.removeClass('current-item').parent().find(' > li').last().addClass('current-item');
+                current = current.removeClass('current-item').parent().find(' > li').last().addClass('current-item');
 			}
 		} else if(action == 'down') {
 			var next = current.next();			
 			if (next.is('li')){
 				current.removeClass('current-item');
-				next.addClass('current-item');
+                current = next.addClass('current-item');
 			} else {
-                current.removeClass('current-item').parent().find(' > li').first().addClass('current-item');
+                current = current.removeClass('current-item').parent().find(' > li').first().addClass('current-item');
   			}
 		}
+
+        if (this.cannedMode === true) {
+			this.renderPreview(current);
+		}
 	}
-	
+
+    LHCCannedMessageAutoSuggest.prototype.renderPreview = function(element)
+	{
+		var dataMsg = element.find('> .canned-msg').attr('data-msg');
+
+		if (typeof dataMsg !== 'undefined') {
+
+            var element = $('#canned-hash-current-' + this.chat_id).parent().find('.canned-msg-preview');
+
+            if (element.size() == 0) {
+                $('#canned-hash-current-' + this.chat_id).parent().append('<div class="canned-msg-preview"></div>');
+                element = $('#canned-hash-current-' + this.chat_id).parent().find('.canned-msg-preview');
+			}
+
+            element.html(dataMsg);
+		} else {
+            $('#canned-hash-current-' + this.chat_id).parent().find('.canned-msg-preview').remove();
+		}
+	}
+
 	LHCCannedMessageAutoSuggest.prototype.stopSuggesting = function()
 	{
 		this.textarea.parent().find('.canned-suggester').remove();
@@ -222,7 +247,12 @@ var LHCCannedMessageAutoSuggest = (function() {
 
 			this.timeoutRequest = setTimeout(function () {
 
-				$.getJSON(WWW_DIR_JAVASCRIPT + 'cannedmsg/showsuggester/' + _that.chat_id,{keyword : _that.currentKeword}, function(data) {
+				if (_that.currentRequest != null) {
+                    _that.currentRequest.abort();
+                    _that.currentRequest = null;
+				}
+
+				_that.currentRequest = $.getJSON(WWW_DIR_JAVASCRIPT + 'cannedmsg/showsuggester/' + _that.chat_id,{keyword : _that.currentKeword}, function(data) {
 					_that.textarea.parent().find('.canned-suggester').remove();
 					_that.textarea.before(data.result);
 					_that.initSuggester();
@@ -239,7 +269,7 @@ var LHCCannedMessageAutoSuggest = (function() {
 	LHCCannedMessageAutoSuggest.prototype.initSuggester = function()
 	{
 		var _that = this;
-		$('#canned-hash-'+this.chat_id+' > li:last-child').addClass('current-item');
+		var currentElement = $('#canned-hash-'+this.chat_id+' > li:last-child').addClass('current-item');
 		
 		$('#canned-hash-'+this.chat_id+' > li > a').click(function() {
 			
@@ -248,7 +278,7 @@ var LHCCannedMessageAutoSuggest = (function() {
 			var content = $('#canned-hash-current-'+_that.chat_id);
 			content.html('').show();
 			$(this).parent().find('ul').clone().appendTo(content);
-			content.find('ul > li:first-child').addClass('current-item');
+            _that.renderPreview(content.find('ul > li:first-child').addClass('current-item'));
 			
 			var container = $(this).parent().parent();
 			container.hide();
@@ -288,6 +318,7 @@ var LHCCannedMessageAutoSuggest = (function() {
 			content.find('span.left-return').click(function(){
 				container.show();
 				content.html('').hide();
+                content.parent().find('.canned-msg-preview').remove();
 				_that.cannedMode = false;
 			});
 		});
@@ -295,7 +326,9 @@ var LHCCannedMessageAutoSuggest = (function() {
 		// Show first canned message list if there is only one tag matched
 		if ($('#canned-hash-'+this.chat_id+' > li').size() == 1) {
 			$('#canned-hash-'+this.chat_id+' > li > a').trigger( "click" );
-		}		
+		} else {
+            this.renderPreview(currentElement);
+		}
 	}
 	
 	return LHCCannedMessageAutoSuggest;

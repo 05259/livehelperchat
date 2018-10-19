@@ -105,6 +105,9 @@ class erLhcoreClassModelChat {
            
                // Product ID
                'product_id'    	        => $this->product_id,
+
+               // Product ID
+               'invitation_id'    	    => $this->invitation_id,
        		
                'uagent'    	        	=> $this->uagent,
                'device_type'    	    => $this->device_type,
@@ -161,6 +164,11 @@ class erLhcoreClassModelChat {
 
        // Subjects
        $q->deleteFrom( 'lh_abstract_subject_chat' )->where( $q->expr->eq( 'chat_id', $this->id ) );
+       $stmt = $q->prepare();
+       $stmt->execute();
+
+       // Auto responder chats
+       $q->deleteFrom( 'lh_abstract_auto_responder_chat' )->where( $q->expr->eq( 'chat_id', $this->id ) );
        $stmt = $q->prepare();
        $stmt->execute();
        
@@ -270,7 +278,30 @@ class erLhcoreClassModelChat {
        	        }
        	        
        			return $this->plain_user_name;
-       		break;	
+       		break;
+
+       	case 'n_official':
+       	        $this->n_office = false;
+
+       	        if ($this->user !== false) {
+       	            $this->n_office = (string)$this->user->name;
+       	            if ($this->n_office == '') {
+                        $this->n_office = $this->plain_user_name;
+                    }
+       	        }
+
+       			return $this->n_office;
+       		break;
+
+       	case 'n_off_full':
+       	        $this->n_off_full = false;
+       	        
+       	        if ($this->user !== false) {
+       	            $this->n_off_full = (string)$this->user->name_official;
+       	        }
+
+       			return $this->n_off_full;
+       		break;
        		
        	case 'user':
        		   $this->user = false;
@@ -487,11 +518,11 @@ class erLhcoreClassModelChat {
            $location = erLhcoreClassModelChatOnlineUser::getUserData($geo_data['geo_service_identifier'],$instance->ip,$params);
 
            if ($location !== false){
-               $instance->country_code = $location->country_code;
-               $instance->country_name = $location->country_name;
-               $instance->lat = $location->lat;
-               $instance->lon = $location->lon;
-               $instance->city = $location->city;
+               $instance->country_code = (string)$location->country_code;
+               $instance->country_name = (string)$location->country_name;
+               $instance->lat = (string)$location->lat;
+               $instance->lon = (string)$location->lon;
+               $instance->city = (string)$location->city;
            }
        }
 
@@ -665,6 +696,8 @@ class erLhcoreClassModelChat {
    public $uagent = '';
 
    public $anonymized = 0;
+
+   public $invitation_id = 0;
 
    // 0 - PC, 1 - mobile, 2 - tablet
    public $device_type = 0;

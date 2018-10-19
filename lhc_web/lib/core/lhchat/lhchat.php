@@ -59,6 +59,10 @@ class erLhcoreClassChat {
 			'auto_responder_id',
 			'chat_locale',
 			'anonymized',
+			'uagent',
+			'pnd_time',
+			'user_tz_identifier',
+			'invitation_id',
 	);
 
 	public static $limitMessages = 50;
@@ -422,6 +426,13 @@ class erLhcoreClassChat {
     			$conditions[] = $q->expr->like( $field, $q->bindValue('%'.$fieldValue.'%') );
     		}
     	}
+
+        if (isset($params['filternot']) && count($params['filternot']) > 0)
+        {
+            foreach ($params['filternot'] as $field => $fieldValue) {
+                $conditions[] = $q->expr->neq($field, $q->bindValue($fieldValue));
+            }
+        }
 
     	if (isset($params['customfilter']) && count($params['customfilter']) > 0)
     	{

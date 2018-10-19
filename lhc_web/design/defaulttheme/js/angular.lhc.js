@@ -1,7 +1,7 @@
 $( document ).ready(function() {
 	var hash = window.location.hash;	
 	if (hash != '') {
-		$('ul[role="tablist"] a[href="' + hash.replace("#/","#") + '"]').tab('show');
+		$('ul[role="tablist"] a[href="' + hash.replace("#!","") + '"]').tab('show');
 	}
 });
 
@@ -24,13 +24,13 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 	
 	this.loadChatList = function(filter){
 		var deferred = $q.defer();		
-		$http.get(WWW_DIR_JAVASCRIPT + 'chat/syncadmininterface' + filter).success(function(data) {
+		$http.get(WWW_DIR_JAVASCRIPT + 'chat/syncadmininterface' + filter).then(function(data) {
 			 if (typeof data.error_url !== 'undefined') {
 				 document.location = data.error_url;
 			 } else {
-				 deferred.resolve(data);
+				 deferred.resolve(data.data);
 			 }			 
-		}).error(function(){
+		},function(){
 			deferred.reject('error');
 		});		
 		return deferred.promise;
@@ -38,13 +38,13 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 
 	this.loadInitialData = function(appendURL) {
 		var deferred = $q.defer();		
-		$http.get(WWW_DIR_JAVASCRIPT + 'chat/loadinitialdata' + appendURL).success(function(data) {
+		$http.get(WWW_DIR_JAVASCRIPT + 'chat/loadinitialdata' + appendURL).then(function(data) {
 			 if (typeof data.error_url !== 'undefined') {
-				 document.location = data.error_url;
+				 document.location = data.data.error_url;
 			 } else {
-				 deferred.resolve(data);
+				 deferred.resolve(data.data);
 			 }			 
-		}).error(function(){
+		},function(){
 			deferred.reject('error');
 		});		
 		return deferred.promise;
@@ -52,13 +52,13 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 
 	this.loadActiveChats = function() {
 		var deferred = $q.defer();		
-		$http.get(WWW_DIR_JAVASCRIPT + 'chat/loadactivechats').success(function(data) {
+		$http.get(WWW_DIR_JAVASCRIPT + 'chat/loadactivechats').then(function(data) {
 			 if (typeof data.error_url !== 'undefined') {
 				 document.location = data.error_url;
 			 } else {
-				 deferred.resolve(data);
+				 deferred.resolve(data.data);
 			 }			 
-		}).error(function(){
+		},function(){
 			deferred.reject('error');
 		});		
 		return deferred.promise;
@@ -66,13 +66,13 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 	
 	this.getNotificationsData = function(id) {
 		var deferred = $q.defer();
-		$http.get(WWW_DIR_JAVASCRIPT + 'chat/getnotificationsdata/(id)/' + id).success(function(data) {
+		$http.get(WWW_DIR_JAVASCRIPT + 'chat/getnotificationsdata/(id)/' + id).then(function(data) {
 			if (typeof data.error_url !== 'undefined') {
-				document.location = data.error_url;
+				document.location = data.data.error_url;
 			} else {
-				deferred.resolve(data);
+				deferred.resolve(data.data);
 			}
-		}).error(function(){
+		},function(){
 			deferred.reject('error');
 		});
 		return deferred.promise;
@@ -80,9 +80,9 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 	
 	this.setInactive = function(status) {
 		var deferred = $q.defer();
-		$http.get(WWW_DIR_JAVASCRIPT + 'user/setinactive/'+status).success(function(data) {
-			deferred.resolve(data);
-		}).error(function() {
+		$http.get(WWW_DIR_JAVASCRIPT + 'user/setinactive/'+status).then(function(data) {
+			deferred.resolve(data.data);
+		},function() {
 			deferred.reject('error');
 		});
 		return deferred.promise;
@@ -90,10 +90,10 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 
 	this.setOnlineMode = function(status) {
         var deferred = $q.defer();
-        $http.get(WWW_DIR_JAVASCRIPT + 'user/setoffline/'+status).success(function(data) {
-            deferred.resolve(data);
-        }).error(function(data) {
-            deferred.reject(data);
+        $http.get(WWW_DIR_JAVASCRIPT + 'user/setoffline/'+status).then(function(data) {
+            deferred.resolve(data.data);
+        },function(data) {
+            deferred.reject(data.data);
         });
         return deferred.promise;
 	};
@@ -101,19 +101,19 @@ services.factory('LiveHelperChatFactory', ['$http','$q',function ($http, $q) {
 	this.changeVisibility = function(status)
     {
         var deferred = $q.defer();
-        $http.get(WWW_DIR_JAVASCRIPT + 'user/setinvisible/'+status).success(function(data) {
-            deferred.resolve(data);
-        }).error(function(data) {
-            deferred.reject(data);
+        $http.get(WWW_DIR_JAVASCRIPT + 'user/setinvisible/'+status).then(function(data) {
+            deferred.resolve(data.data);
+        },function(data) {
+            deferred.reject(data.data);
         });
         return deferred.promise;
     };
 
 	this.getActiveOperatorChat = function(user_id) {
         var deferred = $q.defer();
-        $http.get(WWW_DIR_JAVASCRIPT + 'chat/startchatwithoperator/'+user_id+'/(mode)/check').success(function(data) {
-        	deferred.resolve(data);
-        }).error(function(){
+        $http.get(WWW_DIR_JAVASCRIPT + 'chat/startchatwithoperator/'+user_id+'/(mode)/check').then(function(data) {
+        	deferred.resolve(data.data);
+        },function(){
             deferred.reject('error');
         });
         return deferred.promise;
@@ -196,15 +196,15 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 	this.custom_extension_filter = '';
 
 	// Active chat limit
-	this.limitb = this.restoreLocalSetting('limitb',10,false);
-	this.limita = this.restoreLocalSetting('limita',10,false);
-	this.limitu = this.restoreLocalSetting('limitu',10,false);
-	this.limitp = this.restoreLocalSetting('limitp',10,false);
-	this.limito = this.restoreLocalSetting('limito',10,false);
-	this.limitc = this.restoreLocalSetting('limitc',10,false);
-	this.limitd = this.restoreLocalSetting('limitd',10,false);
-	this.limitmc = this.restoreLocalSetting('limitmc',10,false);
-	
+	this.limitb = this.restoreLocalSetting('limitb','10',false);
+	this.limita = this.restoreLocalSetting('limita','10',false);
+	this.limitu = this.restoreLocalSetting('limitu','10',false);
+	this.limitp = this.restoreLocalSetting('limitp','10',false);
+	this.limito = this.restoreLocalSetting('limito',confLH.dlist.op_n,false);
+	this.limitc = this.restoreLocalSetting('limitc','10',false);
+	this.limitd = this.restoreLocalSetting('limitd','10',false);
+	this.limitmc = this.restoreLocalSetting('limitmc','10',false);
+
 	// Active chat's operators filter
 	this.activeu = this.restoreLocalSetting('activeu',[],true);
 	this.pendingu = this.restoreLocalSetting('pendingu',[],true);
@@ -212,6 +212,10 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 	// Main left menu of pagelayout
 	$scope.lmtoggle = this.restoreLocalSetting('lmtoggle','false',false) != 'false';
 	$scope.lmtoggler = this.restoreLocalSetting('lmtoggler','false',false) != 'false';
+
+    this.lhcVersion = 0;
+    this.lhcVersionCounter = 8;
+    this.lhcPendingRefresh = false;
 
 	// Stores last ID of unread/pending chat id
 	this.lastidEvent = 0;
@@ -382,8 +386,8 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 		}
 	};
 	
-	this.getToggleWidget = function(variable) {
-		this.toggleWidgetData[variable] = this.restoreLocalSetting(variable,'false',false) == 'false' ? false : true;
+	this.getToggleWidget = function(variable, defaultValue) {
+		this.toggleWidgetData[variable] = this.restoreLocalSetting(variable,(typeof defaultValue === 'undefined' ? 'false' : defaultValue), false) == 'false' ? false : true;
 	};
 	
 	this.getToggleWidgetSort = function(variable) {
@@ -821,7 +825,7 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 						$scope[key] = item;
 
                         if (tabs.size() > 0) {
-							if (key == 'pending_chats' || key == 'my_chats') {
+							if (key == 'pending_chat' || key == 'my_chats') {
 								item.list.forEach(function (chat) {
 									if (typeof chat.user_id !== 'undefined' && chat.user_id == confLH.user_id && confLH.accept_chats == 1 && chat.status !== 1) {
 										if ($('#chat-tab-link-' + chat.id).length == 0) {
@@ -847,7 +851,12 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 							
 							var chatsSkipped = 0; // Do not show notification for chats if they appear at the bottom, only applies to unassigned chats
 
-							angular.forEach(item.list, function(itemList, keyItem) {
+							var itemsList = item.list;
+							if (item.last_id_identifier == 'pending_chat' && typeof _that.toggleWidgetData['pending_chats_sort'] !== 'undefined' && _that.toggleWidgetData['pending_chats_sort'] == true) {
+                                itemsList = item.list.slice().reverse();
+							}
+
+							angular.forEach(itemsList, function(itemList, keyItem) {
 	
 		                        var userId = (typeof itemList.user_id !== 'undefined' ? itemList.user_id : 0);
 		                       		                        
@@ -924,6 +933,13 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 				_that.hideOnline = data.ho == 1;
 				_that.hideInvisible = data.im == 1;
 
+				if (_that.lhcVersion != data.v) {
+                    _that.lhcVersion = data.v;
+                    _that.lhcPendingRefresh = true;
+					_that.versionChanged();
+				}
+
+
 				if ($scope.setTimeoutEnabled == true) {
 					$scope.timeoutControl = setTimeout(function(){
 						$scope.loadChatList();
@@ -938,6 +954,17 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 					$scope.loadChatList();
 				},confLH.back_office_sinterval);
 		});
+	};
+
+    this.versionChanged = function() {
+		var _that = this;
+        $interval(function() {
+            _that.lhcVersionCounter = _that.lhcVersionCounter - 1;
+            console.log(_that.lhcVersionCounter);
+            if (_that.lhcVersionCounter == 0) {
+                document.location.reload(true);
+            }
+        }, 1000);
 	};
 
 	this.compareNotificationsAndHide = function(oldStatus, newStatus) {
@@ -1187,7 +1214,8 @@ lhcAppControllers.controller('LiveHelperChatCtrl',['$scope','$http','$location',
 			_that.userList = data.user_list;
             _that.hideInvisible = data.im;
             _that.hideOnline = data.ho;
-			
+            _that.lhcVersion = data.v;
+
 			angular.forEach(_that.widgetsItems, function(listId) {
 				_that.setDepartmentNames(listId);
 			});

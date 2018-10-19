@@ -272,6 +272,115 @@ class erLhcoreClassChatWorkflow {
 	    	}	    	
     	}
 
+    	$timeout = (int)erLhcoreClassModelChatConfig::fetch('autoclose_timeout_pending')->current_value;
+    	if ($timeout > 0) {
+
+            $delay = time()-($timeout*60);
+            foreach (erLhcoreClassChat::getList(array('limit' => 500,'filterlt' => array('time' => $delay), 'filterin' => array('status' => array(erLhcoreClassModelChat::STATUS_PENDING_CHAT)))) as $chat) {
+                $chat->status = erLhcoreClassModelChat::STATUS_CLOSED_CHAT;
+
+                $msg = new erLhcoreClassModelmsg();
+                $msg->msg = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/syncuser','Chat was automatically closed by cron');
+                $msg->chat_id = $chat->id;
+                $msg->user_id = -1;
+
+                $chat->last_user_msg_time = $msg->time = time();
+
+                erLhcoreClassChat::getSession()->save($msg);
+
+                if ($chat->last_msg_id < $msg->id) {
+                    $chat->last_msg_id = $msg->id;
+                }
+
+                if ($chat->wait_time == 0) {
+                    $chat->wait_time = time() - ($chat->pnd_time > 0 ? $chat->pnd_time : $chat->time);
+                }
+
+                $chat->chat_duration = erLhcoreClassChat::getChatDurationToUpdateChatID($chat);
+                $chat->cls_time = time();
+                $chat->has_unread_messages = 0;
+                $chat->updateThis();
+
+                erLhcoreClassChat::closeChatCallback($chat, $chat->user);
+
+                erLhcoreClassChat::updateActiveChats($chat->user_id);
+
+                $closedChatsNumber++;
+            }
+		}
+
+    	$timeout = (int)erLhcoreClassModelChatConfig::fetch('autoclose_timeout_active')->current_value;
+    	if ($timeout > 0) {
+            $delay = time()-($timeout*60);
+            foreach (erLhcoreClassChat::getList(array('limit' => 500,'filterlt' => array('time' => $delay), 'filterin' => array('status' => array(erLhcoreClassModelChat::STATUS_ACTIVE_CHAT)))) as $chat) {
+                $chat->status = erLhcoreClassModelChat::STATUS_CLOSED_CHAT;
+
+                $msg = new erLhcoreClassModelmsg();
+                $msg->msg = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/syncuser','Chat was automatically closed by cron');
+                $msg->chat_id = $chat->id;
+                $msg->user_id = -1;
+
+                $chat->last_user_msg_time = $msg->time = time();
+
+                erLhcoreClassChat::getSession()->save($msg);
+
+                if ($chat->last_msg_id < $msg->id) {
+                    $chat->last_msg_id = $msg->id;
+                }
+
+                if ($chat->wait_time == 0) {
+                    $chat->wait_time = time() - ($chat->pnd_time > 0 ? $chat->pnd_time : $chat->time);
+                }
+
+                $chat->chat_duration = erLhcoreClassChat::getChatDurationToUpdateChatID($chat);
+                $chat->cls_time = time();
+                $chat->has_unread_messages = 0;
+                $chat->updateThis();
+
+                erLhcoreClassChat::closeChatCallback($chat, $chat->user);
+
+                erLhcoreClassChat::updateActiveChats($chat->user_id);
+
+                $closedChatsNumber++;
+            }
+		}
+
+		$timeout = (int)erLhcoreClassModelChatConfig::fetch('autoclose_timeout_bot')->current_value;
+    	if ($timeout > 0) {
+            $delay = time()-($timeout*60);
+            foreach (erLhcoreClassChat::getList(array('limit' => 500,'filterlt' => array('time' => $delay), 'filterin' => array('status' => array(erLhcoreClassModelChat::STATUS_BOT_CHAT)))) as $chat) {
+                $chat->status = erLhcoreClassModelChat::STATUS_CLOSED_CHAT;
+
+                $msg = new erLhcoreClassModelmsg();
+                $msg->msg = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/syncuser','Chat was automatically closed by cron');
+                $msg->chat_id = $chat->id;
+                $msg->user_id = -1;
+
+                $chat->last_user_msg_time = $msg->time = time();
+
+                erLhcoreClassChat::getSession()->save($msg);
+
+                if ($chat->last_msg_id < $msg->id) {
+                    $chat->last_msg_id = $msg->id;
+                }
+
+                if ($chat->wait_time == 0) {
+                    $chat->wait_time = time() - ($chat->pnd_time > 0 ? $chat->pnd_time : $chat->time);
+                }
+
+                $chat->chat_duration = erLhcoreClassChat::getChatDurationToUpdateChatID($chat);
+                $chat->cls_time = time();
+                $chat->has_unread_messages = 0;
+                $chat->updateThis();
+
+                erLhcoreClassChat::closeChatCallback($chat, $chat->user);
+
+                erLhcoreClassChat::updateActiveChats($chat->user_id);
+
+                $closedChatsNumber++;
+            }
+		}
+
     	return $closedChatsNumber;
     }
 
@@ -300,7 +409,7 @@ class erLhcoreClassChatWorkflow {
     	
     	return $purgedChatsNumber;
     }
-    
+
     public static function autoAssign(& $chat, $department, $params = array()) {
 
     	if ( $department->active_balancing == 1 && ($department->max_ac_dep_chats == 0 || $department->active_chats_counter < $department->max_ac_dep_chats) && ($chat->user_id == 0 || ($department->max_timeout_seconds > 0 && $chat->tslasign < time()-$department->max_timeout_seconds)) ){
@@ -348,28 +457,58 @@ class erLhcoreClassChatWorkflow {
                         // Usefull for extension which has custom auto assign workflow
                         if (isset($params['user_ids'])) {
                             if (empty($params['user_ids'])) {
-                                return array('status' => erLhcoreClassChatEventDispatcher::STOP_WORKFLOW, 'user_id' => 0);;
+                                return array('status' => erLhcoreClassChatEventDispatcher::STOP_WORKFLOW, 'user_id' => 0);
                             }
 
-                            $appendSQL .= ' AND lh_userdep.user_id IN (' . implode(', ',$params['user_ids']) . ')';
+                            $appendSQL .= ' AND `lh_userdep`.`user_id` IN (' . implode(', ',$params['user_ids']) . ')';
                         }
 
         	    	    $sql = "SELECT user_id FROM lh_userdep WHERE last_accepted < :last_accepted AND ro = 0 AND hide_online = 0 AND dep_id = :dep_id AND last_activity > :last_activity AND user_id != :user_id {$appendSQL} ORDER BY last_accepted ASC LIMIT 1";
 
-        	    	    $db = ezcDbInstance::get();
-        	    	    $stmt = $db->prepare($sql);
-        	    	    $stmt->bindValue(':dep_id',$department->id,PDO::PARAM_INT);
-        	    	    $stmt->bindValue(':last_activity',(time()-$isOnlineUser),PDO::PARAM_INT);
-        	    	    $stmt->bindValue(':user_id',$chat->user_id,PDO::PARAM_INT);
-        	    	    $stmt->bindValue(':last_accepted',(time() - $department->delay_before_assign),PDO::PARAM_INT);
+                        $tryDefault = true;
 
-        	    	    if ($department->max_active_chats > 0) {
-        	    	        $stmt->bindValue(':max_active_chats',$department->max_active_chats,PDO::PARAM_INT);
-        	    	    }
-        
-        	    	    $stmt->execute();
-        
-        	    	    $user_id = $stmt->fetchColumn();
+                        // Try to assign to operator speaking same language first
+                        if ($department->assign_same_language == 1 && $chat->chat_locale != '') {
+
+                        	$sqlLanguages =  "SELECT `lh_userdep`.`user_id` FROM lh_userdep INNER JOIN lh_speech_user_language ON `lh_speech_user_language`.`user_id` = `lh_userdep`.`user_id` WHERE last_accepted < :last_accepted AND ro = 0 AND hide_online = 0 AND dep_id = :dep_id AND last_activity > :last_activity AND `lh_userdep`.`user_id` != :user_id AND `lh_speech_user_language`.`language` = :chatlanguage {$appendSQL} ORDER BY last_accepted ASC LIMIT 1";
+
+                            $db = ezcDbInstance::get();
+                            $stmt = $db->prepare($sqlLanguages);
+                            $stmt->bindValue(':dep_id',$department->id,PDO::PARAM_INT);
+                            $stmt->bindValue(':last_activity',(time()-$isOnlineUser),PDO::PARAM_INT);
+                            $stmt->bindValue(':user_id',$chat->user_id,PDO::PARAM_INT);
+                            $stmt->bindValue(':last_accepted',(time() - $department->delay_before_assign),PDO::PARAM_INT);
+                            $stmt->bindValue(':chatlanguage',$chat->chat_locale,PDO::PARAM_STR);
+
+                            if ($department->max_active_chats > 0) {
+                                $stmt->bindValue(':max_active_chats',$department->max_active_chats,PDO::PARAM_INT);
+                            }
+
+                            $stmt->execute();
+
+                            $user_id = $stmt->fetchColumn();
+
+                            if (is_numeric($user_id) && $user_id > 0) {
+                                $tryDefault = false;
+							}
+						}
+
+						if ($tryDefault == true) {
+                            $db = ezcDbInstance::get();
+                            $stmt = $db->prepare($sql);
+                            $stmt->bindValue(':dep_id',$department->id,PDO::PARAM_INT);
+                            $stmt->bindValue(':last_activity',(time()-$isOnlineUser),PDO::PARAM_INT);
+                            $stmt->bindValue(':user_id',$chat->user_id,PDO::PARAM_INT);
+                            $stmt->bindValue(':last_accepted',(time() - $department->delay_before_assign),PDO::PARAM_INT);
+
+                            if ($department->max_active_chats > 0) {
+                                $stmt->bindValue(':max_active_chats',$department->max_active_chats,PDO::PARAM_INT);
+                            }
+
+                            $stmt->execute();
+
+                            $user_id = $stmt->fetchColumn();
+						}
         
         	    	} else {
         	    	    $db = ezcDbInstance::get();

@@ -1,38 +1,30 @@
-<form action="<?php echo erLhcoreClassDesign::baseurl('statistic/statistic')?>/(tab)/departments" method="get">
+<form action="<?php echo erLhcoreClassDesign::baseurl('statistic/statistic')?>/(tab)/departments" method="get" autocomplete="off">
 
     <div class="row form-group">
 
         <div class="col-md-3">
             <div class="form-group">
                 <label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Department')?></label>
-
-                <div class="btn-block-department">
-                    <ul class="nav">
-                        <li class="dropdown">
-
-                            <button type="button" class="btn btn-default btn-block btn-sm dropdown-toggle btn-department-dropdown" data-toggle="dropdown" aria-expanded="false">
-                                <?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department')?> <span class="caret"></span>
-                            </button>
-
-                            <ul class="dropdown-menu" role="menu">
-                                <?php foreach (erLhcoreClassModelDepartament::getList() as $item) : ?>
-                                    <li data-stoppropagation="true"><label><input <?php if (is_array($input->department_ids) && in_array($item->id,$input->department_ids)) : ?>checked="checked"<?php endif;?> type="checkbox" name="department_ids[]" value="<?php echo $item->id?>"><?php echo htmlspecialchars($item->name)?></label></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+                <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
+                    'input_name'     => 'department_ids[]',
+                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department'),
+                    'selected_id'    => $input->department_ids,
+                    'css_class'      => 'form-control',
+                    'display_name'   => 'name',
+                    'list_function'  => 'erLhcoreClassModelDepartament::getList'
+                )); ?>
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="form-group">
                 <label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Department group');?></label>
-                <?php echo erLhcoreClassRenderHelper::renderCombobox( array (
-                    'input_name'     => 'department_group_id',
-                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department group'),
-                    'selected_id'    => $input->department_group_id,
-                    'css_class'      => 'form-control input-sm',
+                <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
+                    'input_name'     => 'department_group_ids[]',
+                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department'),
+                    'selected_id'    => $input->department_group_ids,
+                    'css_class'      => 'form-control',
+                    'display_name'   => 'name',
                     'list_function'  => 'erLhcoreClassModelDepartamentGroup::getList'
                 )); ?>
             </div>
@@ -173,11 +165,9 @@
             $('#id_timefrom,#id_timeto').fdatepicker({
                 format: 'yyyy-mm-dd'
             });
-
             $(".btn-block-department").on("click", "[data-stopPropagation]", function(e) {
                 e.stopPropagation();
             });
-
         });
     </script>
 </form>
@@ -229,6 +219,11 @@ function drawDepartmentStats(){
             legend: {
                // display : false,
                // position: 'top',
+            },
+            layout: {
+                padding: {
+                    top: 20
+                }
             },
             tooltips: {
                 callbacks: {

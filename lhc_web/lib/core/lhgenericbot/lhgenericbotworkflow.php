@@ -95,6 +95,26 @@ class erLhcoreClassGenericBotWorkflow {
 
         try {
 
+            // Cancel workflow
+            if ($payload == 'cancel_workflow') {
+
+                $chatEvent->removeThis();
+
+                if (isset($chatEvent->content_array['callback_list'][0]['content']['attr_options']['collection_callback_cancel']) && is_numeric($chatEvent->content_array['callback_list'][0]['content']['attr_options']['collection_callback_cancel'])) {
+                       $trigger = erLhcoreClassModelGenericBotTrigger::fetch($chatEvent->content_array['callback_list'][0]['content']['attr_options']['collection_callback_cancel']);
+                        if ($trigger instanceof erLhcoreClassModelGenericBotTrigger) {
+                            $paramsTrigger = array();
+                            erLhcoreClassGenericBotWorkflow::processTrigger($chat, $trigger, true, $paramsTrigger);
+                        }
+                } elseif (isset($chatEvent->content_array['callback_list'][0]['content']['cancel_message']) && $chatEvent->content_array['callback_list'][0]['content']['cancel_message'] != '') {
+                    throw new Exception($chatEvent->content_array['callback_list'][0]['content']['cancel_message']);
+                } else {
+                    throw new Exception('Canceled!');
+                }
+
+                return;
+            }
+
             // Event was processed we can remove it now
             foreach ($chatEvent->content_array['callback_list'] as $eventData) {
 
@@ -159,6 +179,74 @@ class erLhcoreClassGenericBotWorkflow {
                             $stmt->execute();
                             $chat->phone = $payload;
                         }
+                    } elseif ($eventData['content']['type'] == 'chat_attr') {
+
+                        // Make sure field is not empty
+                        if (empty($payload)) {
+                            if (isset($eventData['content']['validation_error']) && !empty($eventData['content']['validation_error'])){
+                                throw new erLhcoreClassGenericBotException($eventData['content']['validation_error']);
+                            } else {
+                                throw new erLhcoreClassGenericBotException('Your message does not match required format!');
+                            }
+                        }
+
+                        // Preg match validation
+                        if (isset($eventData['content']['preg_match']) && !empty($eventData['content']['preg_match']))
+                        {
+                            if (!preg_match('/' . $eventData['content']['preg_match'] . '/',$payload)) {
+
+                                $metaMessage = array();
+
+                                if (isset($eventData['content']['attr_options']['cancel_button_enabled']) && $eventData['content']['attr_options']['cancel_button_enabled'] == true) {
+                                    $metaMessage = array('content' =>
+                                        array (
+                                            'quick_replies' =>
+                                                array (
+                                                    0 =>
+                                                        array (
+                                                            'type' => 'button',
+                                                            'content' =>
+                                                                array (
+                                                                    'name' => (($eventData['content']['cancel_button'] && $eventData['content']['cancel_button'] != '') ? $eventData['content']['cancel_button'] : 'Cancel?'),
+                                                                    'payload' => 'cancel_workflow',
+                                                                ),
+                                                        )
+                                                ),
+                                        ));
+                                }
+
+                                if (isset($eventData['content']['validation_error']) && !empty($eventData['content']['validation_error'])){
+                                    throw new erLhcoreClassGenericBotException($eventData['content']['validation_error'], 0, null, $metaMessage);
+                                } else {
+                                    throw new erLhcoreClassGenericBotException('Your message does not match required format!', 0, null, $metaMessage);
+                                }
+                            }
+                        }
+
+
+                        if (!empty($chat->additional_data)){
+                            $chatAttributes = (array)json_decode($chat->additional_data,true);
+                        } else {
+                            $chatAttributes = array();
+                        }
+
+                        $attrIdToUpdate = (isset($eventData['content']['attr_options']['identifier']) ? $eventData['content']['attr_options']['identifier'] : $eventData['content']['attr_options']['name']);
+
+                        foreach ($chatAttributes as $key => $attr) {
+                            if ($attr['identifier'] == $attrIdToUpdate) {
+                                unset($chatAttributes[$key]);
+                            }
+                        }
+
+                        $chatAttributes[] = array('key' => $eventData['content']['attr_options']['name'], 'identifier' => $attrIdToUpdate, 'value' => $payload);
+                        $chat->additional_data = json_encode(array_values($chatAttributes));
+
+                        $q = $db->createUpdateQuery();
+                        $q->update( 'lh_chat' )
+                            ->set( 'additional_data', $q->bindValue($chat->additional_data) )
+                            ->where( $q->expr->eq( 'id', $chat->id ) );
+                        $stmt = $q->prepare();
+                        $stmt->execute();
                     }
                 }
 
@@ -176,18 +264,41 @@ class erLhcoreClassGenericBotWorkflow {
                 if (isset($eventData['content']['success_text_pattern']) && !empty($eventData['content']['success_text_pattern'])) {
                     self::reprocessPayload($eventData['content']['success_text_pattern'], $chat, 0);
                 }
+
+                // Execute next trigger if set
+                if (isset($eventData['content']['attr_options']['collection_callback_pattern']) && is_numeric($eventData['content']['attr_options']['collection_callback_pattern'])) {
+                    $trigger = erLhcoreClassModelGenericBotTrigger::fetch($eventData['content']['attr_options']['collection_callback_pattern']);
+
+                    if ($trigger instanceof erLhcoreClassModelGenericBotTrigger) {
+                        $paramsTrigger = array();
+                        erLhcoreClassGenericBotWorkflow::processTrigger($chat, $trigger, true, $paramsTrigger);
+                    }
+                }
             }
 
             $chatEvent->removeThis();
 
         } catch (Exception $e) {
-             self::sendAsBot($chat, $e->getMessage());
+             if ($e instanceof erLhcoreClassGenericBotException){
+                 self::sendAsBot($chat, $e->getMessage(), $e->getContent());
+             } else {
+                 self::sendAsBot($chat, $e->getMessage());
+             }
         }
     }
 
     public static function reprocessPayload($payload, $chat, $type = 1)
     {
-        $event = self::findEvent($payload, $chat->chat_variables_array['gbot_id'], $type);
+        $handler = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_message', array(
+            'chat' => & $chat,
+            'payload' => $payload,
+        ));
+
+        if ($handler !== false) {
+            $event = $handler['event'];
+        } else {
+            $event = self::findEvent($payload, $chat->chat_variables_array['gbot_id'], $type);
+        }
 
         if ($event instanceof erLhcoreClassModelGenericBotTriggerEvent) {
             $message = self::processTrigger($chat, $event->trigger);
@@ -743,18 +854,33 @@ class erLhcoreClassGenericBotWorkflow {
             $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
             if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
 
-                $message = self::sendAsUser($chat, 'Edit - ' . '"'.$workflow->collected_data_array['steps'][$payload]['content']['name'] . '"');
-                self::setLastMessageId($chat, $message->id);
+                $db = ezcDbInstance::get();
 
-                $workflow->collected_data_array['current_step'] = $workflow->collected_data_array['steps'][$payload];
-                $workflow->collected_data_array['step'] = $payload;
-                $workflow->collected_data_array['current_step']['content']['collectable_options']['go_to_summary'] = true;
+                try {
 
-                erLhcoreClassGenericBotActionCollectable::processStep($chat, $workflow->collected_data_array['current_step']);
+                    $db->beginTransaction();
 
-                $workflow->collected_data = json_encode($workflow->collected_data_array);
-                $workflow->status = erLhcoreClassModelGenericBotChatWorkflow::STATUS_STARTED;
-                $workflow->saveThis();
+                    $chat->syncAndLock();
+
+                    $message = self::sendAsUser($chat, 'Edit - ' . '"'.$workflow->collected_data_array['steps'][$payload]['content']['name'] . '"');
+                    self::setLastMessageId($chat, $message->id);
+
+                    $workflow->collected_data_array['current_step'] = $workflow->collected_data_array['steps'][$payload];
+                    $workflow->collected_data_array['step'] = $payload;
+                    $workflow->collected_data_array['current_step']['content']['collectable_options']['go_to_summary'] = true;
+
+                    erLhcoreClassGenericBotActionCollectable::processStep($chat, $workflow->collected_data_array['current_step']);
+
+                    $workflow->collected_data = json_encode($workflow->collected_data_array);
+                    $workflow->status = erLhcoreClassModelGenericBotChatWorkflow::STATUS_STARTED;
+                    $workflow->saveThis();
+
+                    $db->commit();
+
+                } catch (Exception $e) {
+                    $db->rollback();
+                    throw $e;
+                }
             }
         }
     }
@@ -762,49 +888,72 @@ class erLhcoreClassGenericBotWorkflow {
     public static function processTriggerClick($chat, $messageContext, $payload, $params = array()) {
         if (isset($chat->chat_variables_array['gbot_id'])) {
 
-            // Try to find current workflow first
-            $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
-            if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
-                self::processWorkflow($workflow, $chat, array('payload' => $payload));
-                return;
-            }
+            $db = ezcDbInstance::get();
 
-            $handler = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_trigger_click', array(
-                'chat' => & $chat,
-                'msg' => $messageContext,
-                'payload' => $payload,
-            ));
+            try {
 
-            if ($handler !== false) {
-                $trigger = $handler['trigger'];
-            } else {
-                $trigger = erLhcoreClassModelGenericBotTrigger::fetch($payload);
+                $db->beginTransaction();
 
-                if (!($trigger instanceof erLhcoreClassModelGenericBotTrigger)){
-                    self::sendAsBot($chat,erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Trigger could not be found!'));
-                    return;
+                $chat->syncAndLock();
+
+                $continueExecution = true;
+
+                // Try to find current workflow first
+                $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
+                if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
+                    self::processWorkflow($workflow, $chat, array('payload' => $payload));
+                    $continueExecution = false;
                 }
-            }
 
-            $messageClick = self::getClickName($messageContext->meta_msg_array, $payload);
+                if ($continueExecution == true)
+                {
+                    $handler = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_trigger_click', array(
+                        'chat' => & $chat,
+                        'msg' => $messageContext,
+                        'payload' => $payload,
+                    ));
 
-            if (!empty($messageClick)) {
-                if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])){
-                    $messageContext->meta_msg_array['processed'] = true;
+                    if ($handler !== false) {
+                        $trigger = $handler['trigger'];
+                    } else {
+                        $trigger = erLhcoreClassModelGenericBotTrigger::fetch($payload);
+
+                        if (!($trigger instanceof erLhcoreClassModelGenericBotTrigger)){
+                            self::sendAsBot($chat,erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Trigger could not be found!'));
+                            $continueExecution = false;
+                        }
+                    }
+
+                    if ($continueExecution == true)
+                    {
+                        $messageClick = self::getClickName($messageContext->meta_msg_array, $payload);
+
+                        if (!empty($messageClick)) {
+                            if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])){
+                                $messageContext->meta_msg_array['processed'] = true;
+                            }
+                            $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
+                            $messageContext->saveThis();
+                            self::sendAsUser($chat, $messageClick);
+                        }
+
+                        $message = self::processTrigger($chat, $trigger);
+
+                        if (isset($message) && $message instanceof erLhcoreClassModelmsg) {
+                            self::setLastMessageId($chat, $message->id);
+                        } else {
+                            if (erConfigClassLhConfig::getInstance()->getSetting( 'site', 'debug_output' ) == true) {
+                                self::sendAsBot($chat,erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Button action could not be found!'));
+                            }
+                        }
+                    }
                 }
-                $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
-                $messageContext->saveThis();
-                self::sendAsUser($chat, $messageClick);
-            }
 
-            $message = self::processTrigger($chat, $trigger);
+                $db->commit();
 
-            if (isset($message) && $message instanceof erLhcoreClassModelmsg) {
-                self::setLastMessageId($chat, $message->id);
-            } else {
-                if (erConfigClassLhConfig::getInstance()->getSetting( 'site', 'debug_output' ) == true) {
-                    self::sendAsBot($chat,erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Button action could not be found!'));
-                }
+            } catch (Exception $e) {
+                $db->rollback();
+                throw $e;
             }
         }
     }
@@ -813,69 +962,119 @@ class erLhcoreClassGenericBotWorkflow {
 
         if (isset($chat->chat_variables_array['gbot_id'])) {
 
-            // Try to find current workflow first
-            $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
-            if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
-                self::processWorkflow($workflow, $chat, array('payload' => $payload));
-                return;
-            }
+            $db = ezcDbInstance::get();
 
-            $handler = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_click', array(
+            try {
+
+                $db->beginTransaction();
+
+                $chat->syncAndLock();
+
+                $continueExecution = true;
+                
+                // Try to find current callback handler just
+                $chatEvent = erLhcoreClassModelGenericBotChatEvent::findOne(array('filter' => array('chat_id' => $chat->id)));
+                if ($chatEvent instanceof erLhcoreClassModelGenericBotChatEvent) {
+                    self::$currentEvent = $chatEvent;
+                    self::processEvent($chatEvent, $chat, array('payload' => $payload));
+                    $continueExecution = false;
+                }
+
+                if ($continueExecution == true) {
+                    // Try to find current workflow first
+                    $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0, 1)), 'filter' => array('chat_id' => $chat->id)));
+                    if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
+                        self::processWorkflow($workflow, $chat, array('payload' => $payload));
+                        $continueExecution = false;
+                    }
+
+                    if ($continueExecution == true)
+                    {
+                        $handler = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_click', array(
+                            'chat' => & $chat,
+                            'msg' => $messageContext,
+                            'payload' => $payload,
+                        ));
+
+                        if ($handler !== false) {
+                            $event = $handler['event'];
+                        } else {
+                            $event = self::findEvent($payload, $chat->chat_variables_array['gbot_id'], 1);
+                        }
+
+                        $messageClick = self::getClickName($messageContext->meta_msg_array, $payload);
+
+                        if (!empty($messageClick)) {
+                            if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])) {
+                                $messageContext->meta_msg_array['processed'] = true;
+                            }
+                            $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
+                            $messageContext->saveThis();
+                            self::sendAsUser($chat, $messageClick);
+                        }
+
+                        if ($event instanceof erLhcoreClassModelGenericBotTriggerEvent) {
+                            $message = self::processTrigger($chat, $event->trigger);
+                        }
+
+                        if (isset($message) && $message instanceof erLhcoreClassModelmsg) {
+                            self::setLastMessageId($chat, $message->id);
+                        } else {
+                            if (erConfigClassLhConfig::getInstance()->getSetting('site', 'debug_output') == true) {
+                                self::sendAsBot($chat, erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat', 'Button action could not be found!'));
+                            }
+                        }
+                    }
+                }
+
+                $db->commit();
+
+                erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.genericbot_get_click_async', array(
                     'chat' => & $chat,
                     'msg' => $messageContext,
                     'payload' => $payload,
-            ));
+                ));
 
-            if ($handler !== false) {
-                $event = $handler['event'];
-            } else {
-                $event = self::findEvent($payload, $chat->chat_variables_array['gbot_id'], 1);
-            }
-
-            $messageClick = self::getClickName($messageContext->meta_msg_array, $payload);
-
-            if (!empty($messageClick)) {
-                if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])){
-                    $messageContext->meta_msg_array['processed'] = true;
-                }
-                $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
-                $messageContext->saveThis();
-                self::sendAsUser($chat, $messageClick);
-            }
-
-            if ($event instanceof erLhcoreClassModelGenericBotTriggerEvent) {
-                $message = self::processTrigger($chat, $event->trigger);
-            }
-
-            if (isset($message) && $message instanceof erLhcoreClassModelmsg) {
-                self::setLastMessageId($chat, $message->id);
-            } else {
-                if (erConfigClassLhConfig::getInstance()->getSetting( 'site', 'debug_output' ) == true) {
-                    self::sendAsBot($chat,erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Button action could not be found!'));
-                }
+            } catch (Exception $e) {
+                $db->rollback();
+                throw $e;
             }
         }
     }
 
     public static function processValueClick($chat, $messageContext, $payload, $params = array())
     {
+        $db = ezcDbInstance::get();
 
-        // Try to find current workflow first
-        $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
-        if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {
-            self::processWorkflow($workflow, $chat, array('payload' => $payload));
-            return;
-        }
+        try {
 
-        $messageClick = self::getValueName($messageContext->meta_msg_array, $payload);
+            $db->beginTransaction();
 
-        if (!empty($messageClick)) {
-            if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])){
-                $messageContext->meta_msg_array['processed'] = true;
+            $chat->syncAndLock();
+
+            // Try to find current workflow first
+            $workflow = erLhcoreClassModelGenericBotChatWorkflow::findOne(array('filterin' => array('status' => array(0,1)), 'filter' => array('chat_id' => $chat->id)));
+            
+            if ($workflow instanceof erLhcoreClassModelGenericBotChatWorkflow) {                
+                self::processWorkflow($workflow, $chat, array('payload' => $payload));                
+            } else {
+                $messageClick = self::getValueName($messageContext->meta_msg_array, $payload);
+
+                if (!empty($messageClick)) {
+                    if ((isset($params['processed']) && $params['processed'] == true) || !isset($params['processed'])){
+                        $messageContext->meta_msg_array['processed'] = true;
+                    }
+                    $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
+                    $messageContext->saveThis();
+                    self::sendAsUser($chat, $messageClick);
+                }
             }
-            $messageContext->meta_msg = json_encode($messageContext->meta_msg_array);
-            $messageContext->saveThis();
-            self::sendAsUser($chat, $messageClick);
+
+            $db->commit();
+
+        } catch (Exception $e) {
+            $db->rollback();
+            throw $e;
         }
     }
 

@@ -3,6 +3,10 @@
 <?php echo erLhcoreClassAbstract::renderInput('name', $fields['name'], $object)?>
 </div>
 
+<div class="form-group">
+<label><?php echo erLhcoreClassAbstract::renderInput('disabled', $fields['disabled'], $object)?> <?php echo $fields['disabled']['trans'];?></label>
+</div>
+
 <div class="form-group">		
 <label><?php echo $fields['operator_name']['trans'];?></label>
 <?php echo erLhcoreClassAbstract::renderInput('operator_name', $fields['operator_name'], $object)?>
@@ -91,6 +95,11 @@
 <div class="form-group">		
 <label><?php echo $fields['dep_id']['trans'];?></label>
 <?php echo erLhcoreClassAbstract::renderInput('dep_id', $fields['dep_id'], $object)?>
+</div>
+
+<div class="form-group">
+<label><?php echo $fields['campaign_id']['trans'];?></label>
+<?php echo erLhcoreClassAbstract::renderInput('campaign_id', $fields['campaign_id'], $object)?>
 </div>
 
 <div class="form-group">		
