@@ -12,16 +12,16 @@
             <?php endif ?>
 
             <div class="row element-description-row">
-                <div class="col-xs-9">
+                <div class="col-9">
                     <div class="element-description">
                         <h4><?php echo $linkData['start']?><?php echo htmlspecialchars($item['content']['title'])?><?php echo $linkData['end']?></h4>
                         <div><?php echo htmlspecialchars($item['content']['subtitle'])?></div>
                         <?php if (isset($item['buttons']) && !empty($item['buttons'])) : ?>
                             <ul class="quick-replies list-inline">
                                 <?php foreach ($item['buttons'] as $itemButton) : ?>
-                                    <li>
-                                        <?php if ($item['type'] == 'url') : ?>
-                                        <a class="btn btn-xs btn-info btn-bot" target="_blank" href="<?php echo htmlspecialchars($itemButton['content']['payload'])?>">
+                                    <li class="list-inline-item">
+                                        <?php if ($itemButton['type'] == 'url') : ?>
+                                        <a class="btn btn-xs btn-info btn-bot" <?php if (isset($itemButton['content']['payload_message']) && $itemButton['content']['payload_message'] != '') : ?>onclick='lhinst.buttonClicked(<?php echo json_encode($itemButton['content']['payload_message'])?>,<?php echo $messageId?>,$(this))'<?php else : ?>onclick="lhinst.enableVisitorEditor()"<?php endif;?> target="_blank" href="<?php echo htmlspecialchars($itemButton['content']['payload'])?>">
                                         <i class="material-icons">open_in_new</i>
                                         <?php elseif ($itemButton['type'] == 'updatechat') : ?>
                                         <a class="btn btn-xs btn-info btn-bot" data-no-change="true" onclick='lhinst.updateChatClicked(<?php echo json_encode($itemButton['content']['payload'])?>,<?php echo $messageId?>,$(this),true)'>
@@ -37,9 +37,9 @@
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="col-xs-3">
+                <div class="col-3">
                     <?php if ($item['content']['img'] != '' && ($index != 0 || $listCompactStyle == true)) : ?>
-                        <?php echo $linkData['start']?><img class="pull-right img-responsive" src="<?php echo $item['content']['img']?>" /><?php echo $linkData['end']?>
+                        <?php echo $linkData['start']?><img class="float-right img-fluid" src="<?php echo $item['content']['img']?>" /><?php echo $linkData['end']?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -49,7 +49,7 @@
     <?php if (isset($metaMessage['list_quick_replies'])) : foreach ($metaMessage['list_quick_replies'] as $index => $item) : ?>
     <div class="list-group-element button-item <?php $listCompactStyle == true ? print ' compact' : print ' large'?>">
         <?php if ($item['type'] == 'url') : ?>
-        <a target="_blank" href="<?php echo htmlspecialchars($item['content']['payload'])?>">
+        <a target="_blank" <?php if (isset($item['content']['payload_message']) && $item['content']['payload_message'] != '') : ?>onclick='lhinst.buttonClicked(<?php echo json_encode($item['content']['payload_message'])?>,<?php echo $messageId?>,$(this))'<?php else : ?>onclick="lhinst.enableVisitorEditor()"<?php endif;?> href="<?php echo htmlspecialchars($item['content']['payload'])?>">
         <i class="material-icons">open_in_new</i>
         <?php elseif ($item['type'] == 'updatechat') : ?>
         <a data-no-change="true" onclick='lhinst.updateChatClicked(<?php echo json_encode($item['content']['payload'])?>,<?php echo $messageId?>,$(this),true)'>

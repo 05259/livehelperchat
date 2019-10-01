@@ -129,6 +129,14 @@ if (is_numeric($inputData->departament_id) && $inputData->departament_id > 0 && 
     $startDataFields = (array)$startData->data;
 }
 
+if (isset($startDataFields['mobile_popup']) && $startDataFields['mobile_popup'] == true){
+    $detect = new Mobile_Detect;
+    if ($detect->isMobile()) {
+        $Result = erLhcoreClassModule::reRun(erLhcoreClassDesign::baseurlRerun('chat/chatwidget') . erLhcoreClassURL::getInstance()->buildUrlParams() . erLhcoreClassURL::getInstance()->buildUrlQuery());
+        return true;
+    }
+}
+
 // Allow extension override start chat fields
 erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.startchat_data_fields',array('data_fields' => & $startDataFields, 'params' => $Params));
 
@@ -185,6 +193,7 @@ $inputData->hattr = array();
 $inputData->hash_resume = false;
 $inputData->vid = false;
 $inputData->only_bot_online = isset($_POST['onlyBotOnline']) ? (int)$_POST['onlyBotOnline'] : 0;
+$inputData->tag = isset($_GET['tag']) ? (string)$_GET['tag'] : '';
 
 // Perhaps it's direct argument
 if ((string)$Params['user_parameters_unordered']['hash_resume'] != '') {
@@ -233,13 +242,14 @@ if (isset($Result['theme'])) {
 $tpl->set('leaveamessage',$leaveamessage);
 
 if (isset($_POST['StartChat']) && $disabled_department === false) {
-   // Validate post data
-   $Errors = erLhcoreClassChatValidator::validateStartChat($inputData,$startDataFields,$chat, $additionalParams);
+    // Validate post data
+    $Errors = erLhcoreClassChatValidator::validateStartChat($inputData,$startDataFields,$chat, $additionalParams);
 
 	erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.before_chat_started',array('chat' => & $chat, 'errors' => & $Errors, 'offline' => (isset($additionalParams['offline']) && $additionalParams['offline'] == true)));
 
 	if (count($Errors) == 0 && !isset($_POST['switchLang']))
     {
+        $chat->lsync = time();
    		$chat->setIP();
    		erLhcoreClassModelChat::detectLocation($chat);
    		
@@ -306,18 +316,32 @@ if (isset($_POST['StartChat']) && $disabled_department === false) {
     	                $userInstance->dep_id = $chat->dep_id;
     	                $userInstance->message_seen = 1;
     	                $userInstance->message_seen_ts = time();
+
+                        if ($chat->nick != erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Visitor')) {
+                            $onlineAttr = $userInstance->online_attr_system_array;
+                            if (!isset($onlineAttr['username'])){
+                                $onlineAttr['username'] = $chat->nick;
+                                $userInstance->online_attr_system = json_encode($onlineAttr);
+                            }
+                        } elseif ($chat->nick == erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Visitor')){
+                            if ($userInstance->nick && $userInstance->has_nick) {
+                                $chat->nick = $userInstance->nick;
+                            }
+                        }
+
     	                $userInstance->saveThis();
     
     	                $chat->online_user_id = $userInstance->id;
     
     	                if ( erLhcoreClassModelChatConfig::fetch('track_footprint')->current_value == 1) {
-    		            	erLhcoreClassModelChatOnlineUserFootprint::assignChatToPageviews($userInstance);
+    		            	erLhcoreClassModelChatOnlineUserFootprint::assignChatToPageviews($userInstance, erLhcoreClassModelChatConfig::fetch('footprint_background')->current_value == 1);
     		            }
     	            }
     	       }
     
     	       $messageInitial = false;
-    	       
+
+    	       $paramsExecution = array();
     	       // Store message if required
     	       if (isset($startDataFields['message_visible_in_popup']) && $startDataFields['message_visible_in_popup'] == true) {
     	           if ( $inputData->question != '' ) {
@@ -328,9 +352,9 @@ if (isset($_POST['StartChat']) && $disabled_department === false) {
     	               $msg->user_id = 0;
     	               $msg->time = time();
     	               erLhcoreClassChat::getSession()->save($msg);
-    	               
-    	               $messageInitial = $msg;
-    	               
+
+                       $paramsExecution['msg'] = $messageInitial = $msg;
+
     	               $chat->unanswered_chat = 1;
     	               $chat->last_msg_id = $msg->id;
     	               $chat->saveThis();
@@ -338,7 +362,7 @@ if (isset($_POST['StartChat']) && $disabled_department === false) {
     	       }
 
     	       // Set bot workflow if required
-               erLhcoreClassChatValidator::setBot($chat);
+               erLhcoreClassChatValidator::setBot($chat, $paramsExecution);
 
     			// Auto responder
     			$responder = erLhAbstractModelAutoResponder::processAutoResponder($chat);
@@ -410,9 +434,9 @@ if (isset($_POST['StartChat']) && $disabled_department === false) {
 	           $db->rollback();
 	           throw $e;
 	       }
-	       
+
 	       // Redirect user
-	       erLhcoreClassModule::redirect('chat/chat/' . $chat->id . '/' . $chat->hash . $themeAppend);
+	       erLhcoreClassModule::redirect('chat/chat/' . $chat->id . '/' . $chat->hash . $themeAppend . '/(cstarted)/online_chat_started_cb');
 	       exit;
 	   	}
     } else {
@@ -563,13 +587,29 @@ if (isset($_POST['r']))
 	$tpl->set('referer_site',$_POST['r']);
 }
 
+// Auto start chat
+$autoStartResult = erLhcoreClassChatValidator::validateAutoStart(array(
+    'params' => $Params,
+    'inputData' => $inputData,
+    'chat' => $chat,
+    'startDataFields' => $startDataFields,
+    'modeAppend' => '',
+    'modeAppendTheme' => $themeAppend,
+    'popup' => true
+));
+
+if ($autoStartResult !== false) {
+    $Result = $autoStartResult;
+    return;
+}
+
 erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.startchat',array('result' => & $Result,'tpl' => & $tpl, 'params' => & $Params, 'inputData' => & $inputData));
 
 $Result['content'] = $tpl->fetch();
 $Result['pagelayout'] = 'userchat';
 $Result['show_switch_language'] = true;
 $Result['dynamic_height'] = true;
-$Result['dynamic_height_adjust'] = '-20';
+
 
 if (!isset($Result['path'])) {
     $Result['path'] = array(array('title' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Fill in the form to start a chat')));

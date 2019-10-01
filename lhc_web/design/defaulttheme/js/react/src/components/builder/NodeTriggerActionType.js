@@ -54,6 +54,34 @@ export default ({onChange, type}) => {
         {
             'value':'attribute',
             'text' : 'Collect custom attribute',
+        },
+        {
+            'value': 'actions',
+            'text' : 'Execute action',
+        },
+        {
+            'value': 'intent',
+            'text' : 'Intent detection',
+        },
+        {
+            'value': 'intentcheck',
+            'text' : 'Check for pending intentions',
+        },
+        {
+            'value': 'conditions',
+            'text' : 'Check for conditions to proceed',
+        },
+        {
+            'value': 'match_actions',
+            'text' : 'Search for default actions on message',
+        },
+        {
+            'value': 'event_type',
+            'text' : 'Trigger to execute by response',
+        },
+        {
+            'value': 'repeat_restrict',
+            'text' : 'Restrict execution more than defined times',
         }
     ]);
 
@@ -61,12 +89,12 @@ export default ({onChange, type}) => {
 
     return (
         <div className="row">
-            <div className="col-xs-6">
+            <div className="col-6">
             Response type
             </div>
-            <div className="col-xs-6">
+            <div className="col-6">
                 <div className="form-group">
-                    <select onChange={(e) => onChange(e)} className="form-control input-sm" defaultValue={type}>
+                    <select onChange={(e) => onChange(e)} className="form-control form-control-sm" defaultValue={type}>
                         {list}
                     </select>
                 </div>

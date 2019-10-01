@@ -127,7 +127,7 @@ class erLhcoreClassChatHelper
                 $params['chat']->has_unread_messages = 0;
                 
                 $msg = new erLhcoreClassModelmsg();
-                $msg->msg = (string) $params['user'] . ' ' . erTranslationClassLhTranslation::getInstance()->getTranslation('chat/closechatadmin', 'has closed the chat!');
+                $msg->msg = ((isset($params['bot']) && $params['bot'] == true) ? erTranslationClassLhTranslation::getInstance()->getTranslation('chat/closechatadmin', 'Bot') : (string) $params['user']) . ' ' . erTranslationClassLhTranslation::getInstance()->getTranslation('chat/closechatadmin', 'has closed the chat!');
                 $msg->chat_id = $params['chat']->id;
                 $msg->user_id = - 1;
                 
@@ -137,17 +137,36 @@ class erLhcoreClassChatHelper
                 erLhcoreClassChat::getSession()->save($msg);
 
                 $params['chat']->updateThis();
-            
+
+                $q = $db->createDeleteQuery();
+
+                // Auto responder chats
+                $q->deleteFrom( 'lh_abstract_auto_responder_chat' )->where( $q->expr->eq( 'chat_id', $params['chat']->id ) );
+                $stmt = $q->prepare();
+                $stmt->execute();
+
+                // Repeat counter remove
+                $q->deleteFrom( 'lh_generic_bot_repeat_restrict' )->where( $q->expr->eq( 'chat_id', $params['chat']->id ) );
+                $stmt = $q->prepare();
+                $stmt->execute();
+    
+                // Repeat counter remove
+                $q->deleteFrom( 'lh_generic_bot_chat_event' )->where( $q->expr->eq( 'chat_id', $params['chat']->id ) );
+                $stmt = $q->prepare();
+                $stmt->execute();
+
             $db->commit();
-            
-            erLhcoreClassChat::updateActiveChats($params['chat']->user_id);
-            
+
+            if (!isset($params['bot']) || $params['bot'] == false) {
+                erLhcoreClassChat::updateActiveChats($params['chat']->user_id);
+            }
+
             if ($params['chat']->department !== false) {
                 erLhcoreClassChat::updateDepartmentStats($params['chat']->department);
             }
             
             // Execute callback for close chat
-            erLhcoreClassChat::closeChatCallback($params['chat'], $params['user']);            
+            erLhcoreClassChat::closeChatCallback($params['chat'], (isset($params['user']) ? $params['user'] : false));
         }
     }
     
@@ -274,7 +293,7 @@ class erLhcoreClassChatHelper
     		$new->pages_count += $old->pages_count;
     		$new->tt_pages_count += $old->tt_pages_count;
     		$new->first_visit = $old->first_visit;
-    		$new->notes += trim("\n" . $old->notes);
+    		$new->notes = $new->notes . trim("\n" . $old->notes);
     		$new->total_visits += $old->total_visits;
     		$new->invitation_count += $old->invitation_count;
     		$new->time_on_site += $old->time_on_site;

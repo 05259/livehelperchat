@@ -4,8 +4,8 @@
 
 <div role="tabpanel">
 
-	<ul class="nav nav-tabs" role="tablist">
-		<li role="presentation" class="active"><a href="#system" aria-controls="system" role="tab" data-toggle="tab"><?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_titles/system_title.tpl.php'));?></a></li>
+	<ul class="nav nav-tabs mb-3" role="tablist">
+		<li role="presentation" class="nav-item"><a href="#system" class="nav-link active" aria-controls="system" role="tab" data-toggle="tab"><?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_titles/system_title.tpl.php'));?></a></li>
         
         <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_tabs/generate_js.tpl.php'));?>
         
@@ -45,9 +45,21 @@
 
         		        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/expirecache.tpl.php'));?>
         			</ul>
+
+                    <?php if ($currentUser->hasAccessTo('lhabstract','use') && $currentUser->hasAccessTo('lhsystem','auditlog')) : ?>
+                            <h4>Audit</h4>
+                            <ul>
+                                <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/audit_log.tpl.php'));?>
+                            </ul>
+                    <?php endif; ?>
+
 				</div>
+
+
 				
 				<?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/users_section.tpl.php'));?>
+
+
       	         
 			</div>
 

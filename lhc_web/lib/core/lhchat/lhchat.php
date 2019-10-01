@@ -32,7 +32,7 @@ class erLhcoreClassChat {
 			'lat',
 			'lon',
 			'city',
-			'additional_data',
+			//'additional_data',
 			'session_referrer',
 			'wait_time',
 			'chat_duration',
@@ -47,7 +47,7 @@ class erLhcoreClassChat {
 			'fbst',
 			'operator_typing_id',
 			'chat_initiator',
-			'chat_variables',
+			//'chat_variables',
 			// Angular remake
 			'referrer',
 			'last_op_msg_time',
@@ -1163,7 +1163,7 @@ class erLhcoreClassChat {
 
        $userData = $currentUser->getUserData(true);
 
-       if ( $userData->all_departments == 0 ) {
+       if ( $userData->all_departments == 0 && $chat->dep_id != 0) {
 
             /*
              * --From now permission is strictly by assigned department, not by chat owner
@@ -1407,7 +1407,45 @@ class erLhcoreClassChat {
    			foreach ($attrs as $attr) {
    				$object->{$attr};
    			};
-   			
+
+            if (isset($params['additional_columns']) && is_array($params['additional_columns']) && !empty($params['additional_columns'])) {
+                foreach ($params['additional_columns'] as $column) {
+                    if (strpos($column->variable,'additional_data.') !== false) {
+                        $additionalDataArray = $object->additional_data_array;
+                        if (is_array($additionalDataArray)) {
+                            foreach ($additionalDataArray as $additionalItem) {
+
+                                $valueCompare = false;
+
+                                if (isset($additionalItem['identifier'])) {
+                                    $valueCompare = $additionalItem['identifier'];
+                                } elseif (isset($additionalItem['key'])) {
+                                    $valueCompare = $additionalItem['key'];
+                                }
+
+                                if ($valueCompare !== false && $valueCompare == str_replace('additional_data.','',$column->variable)) {
+                                    $object->{'cc_'.$column->id} = $additionalItem['value'];
+                                    break;
+                                }
+                            }
+                        }
+                    } elseif (strpos($column->variable,'chat_variable.') !== false) {
+                        $additionalDataArray = $object->chat_variables_array;
+                        if (is_array($additionalDataArray)) {
+                            $variableName = str_replace('chat_variable.','', $column->variable);
+                            if (isset($object->chat_variables_array[$variableName]) && $object->chat_variables_array[$variableName] != '') {
+                                $object->{'cc_'.$column->id} = $object->chat_variables_array[$variableName];
+                            }
+                        }
+                    } elseif (strpos($column->variable,'lhc.') !== false) {
+                        $variableName = str_replace('lhc.','', $column->variable);
+                        if (isset($object->{$variableName}) && $object->{$variableName} != '') {
+                            $object->{'cc_'.$column->id} = $object->{$variableName};
+                        }
+                    }
+                }
+            }
+
    			foreach ($attrRemove as $attr) {
    				$object->{$attr} = null;
    			};
@@ -1419,7 +1457,9 @@ class erLhcoreClassChat {
    			        }
    			    }
    			}
-   			
+
+
+
    			if (!isset($params['do_not_clean'])){
    			    if (isset($params['filter_function'])){
                     $object = (object)array_filter((array)$object,function ($value) {
@@ -1428,9 +1468,7 @@ class erLhcoreClassChat {
                 } else {
                     $object = (object)array_filter((array)$object);
                 }
-
             }
-
    		}
    }
 
@@ -1454,6 +1492,12 @@ class erLhcoreClassChat {
    public static function validateFilterIn(& $params) {
    		foreach ($params as & $param) {
    			$param = (int)$param;
+   		}
+   }
+
+   public static function validateFilterInString(& $params) {
+   		foreach ($params as & $param) {
+   			$param =  preg_replace('/[^a-zA-Z0-9]/', '', $param );
    		}
    }
    
@@ -1965,8 +2009,18 @@ class erLhcoreClassChat {
        $recordIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
        if (!empty($recordIds)) {
-           $stmt = $db->prepare('SELECT 1 FROM lh_userdep WHERE id IN (' . implode(',', $recordIds) . ') ORDER BY id ASC FOR UPDATE;');
-           $stmt->execute();
+           try {
+               $stmt = $db->prepare('SELECT 1 FROM lh_userdep WHERE id IN (' . implode(',', $recordIds) . ') ORDER BY id ASC FOR UPDATE;');
+               $stmt->execute();
+           } catch (Exception $e) {
+               try {
+                   usleep(100);
+                   $stmt = $db->prepare('SELECT 1 FROM lh_userdep WHERE id IN (' . implode(',', $recordIds) . ') ORDER BY id ASC FOR UPDATE;');
+                   $stmt->execute();
+               } catch (Exception $e) {
+                   error_log($e->getMessage() . "\n" . $e->getTraceAsString());
+               }
+           }
        }
    }
 

@@ -1,10 +1,10 @@
 <?php if (isset($chatbox)) : ?>
     <?php if ($chatbox !== false) : ?>
         <div class="row form-group">
-            <div class="col-xs-10">
+            <div class="col-9">
                 <span><b><?php echo htmlspecialchars($chatbox->name)?></b></span>
             </div>
-            <div class="col-xs-2">
+            <div class="col-3">
                 <?php include(erLhcoreClassDesign::designtpl('lhchat/customer_user_settings.tpl.php'));?>
             </div>
         </div>
@@ -12,28 +12,31 @@
         <?php if ($chatbox->active == 1) : ?>
 
             <div id="messages" class="form-group">
-                <div class="msgBlock" id="messagesBlock" style="height:<?php isset($chatbox_chat_height) ? print (int)$chatbox_chat_height : print 220?>px"><?php
-                    $lastMessageID = 0;
-                    $messages = erLhcoreClassChat::getChatMessages($chatbox->chat->id);
-                    $chat = $chatbox->chat; ?>
-                    <?php include(erLhcoreClassDesign::designtpl('lhchatbox/syncuser.tpl.php'));?>
-                    <?php if (isset($msg)) { $lastMessageID = $msg['id'];} ?>
+                <div id="messagesBlockWrap">
+                    <div class="msgBlock" id="messagesBlock" style="height:<?php isset($chatbox_chat_height) ? print (int)$chatbox_chat_height : print 220?>px"><?php
+                        $lastMessageID = 0;
+                        $messages = erLhcoreClassChat::getChatMessages($chatbox->chat->id);
+                        $chat = $chatbox->chat; ?>
+                        <?php include(erLhcoreClassDesign::designtpl('lhchatbox/syncuser.tpl.php'));?>
+                        <?php if (isset($msg)) { $lastMessageID = $msg['id'];} ?>
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <?php if (isset($_GET['dnc']) && $_GET['dnc'] == 'true') : ?>
-                    <input type="hidden" class="mt5 mb0" value="<?php echo htmlspecialchars(erLhcoreClassChatbox::getVisitorName(),ENT_QUOTES); ?>" id="CSChatNick" />
-                <?php else : ?>
-                    <input class="form-control" type="text" class="mt5 mb0" placholder="Nick" title="Nick" value="<?php echo htmlspecialchars(erLhcoreClassChatbox::getVisitorName(),ENT_QUOTES); ?>" id="CSChatNick" />
-                <?php endif;?>
-            </div>
+            <div id="ChatMessageContainer" class="p-2">
 
-            <div class="pt5">
+                <div>
+                    <?php if (isset($_GET['dnc']) && $_GET['dnc'] == 'true') : ?>
+                        <input type="hidden" class="mt5 mb-0" value="<?php echo htmlspecialchars(erLhcoreClassChatbox::getVisitorName(),ENT_QUOTES); ?>" id="CSChatNick" />
+                    <?php else : ?>
+                        <input class="form-control form-control-sm mb-2" type="text" placholder="Nick" title="Nick" value="<?php echo htmlspecialchars(erLhcoreClassChatbox::getVisitorName(),ENT_QUOTES); ?>" id="CSChatNick" />
+                    <?php endif;?>
+                </div>
+
                 <?php if (isset($_GET['dnc']) && $_GET['dnc'] == 'true') : ?>
                     <span><?php echo htmlspecialchars(erLhcoreClassChatbox::getVisitorName(),ENT_QUOTES); ?></span>
                 <?php endif;?>
-                <textarea class="form-control" rows="4" name="ChatMessage" placeholder="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','Enter your message')?>" id="CSChatMessage"></textarea>
+                <textarea class="form-control form-control-sm mb-2" rows="4" name="ChatMessage" placeholder="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','Enter your message')?>" id="CSChatMessage"></textarea>
                 <script type="text/javascript">
                     jQuery('#CSChatMessage').bind('keydown', 'return', function (evt){
                 	   lhinst.addmsguserchatbox();
@@ -41,12 +44,15 @@
                     });
                     lhinst.afterChatWidgetInit();
                 </script>
+
+                <div>
+                    <input type="button" class="btn btn-secondary btn-sm" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','Send')?>" onclick="lhinst.addmsguserchatbox()" />
+                    <input type="button" class="btn btn-secondary btn-sm float-right" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','BB Code')?>" onclick="return lhc.revealModal({'url':'<?php echo erLhcoreClassDesign::baseurl('chat/bbcodeinsert')?>'})" />
+                </div>
+
             </div>
 
-            <div class="pt5">
-                <input type="button" class="btn btn-default btn-sm" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','Send')?>" onclick="lhinst.addmsguserchatbox()" />
-                <input type="button" class="btn btn-default btn-sm pull-right" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','BB Code')?>" onclick="return lhc.revealModal({'url':'<?php echo erLhcoreClassDesign::baseurl('chat/bbcodeinsert')?>'})" />
-            </div>
+
 
             <script type="text/javascript">
                 lhinst.setChatID('<?php echo $chatbox->chat->id?>');
@@ -55,7 +61,7 @@
                 lhinst.setWidgetMode(true);
                 lhinst.setSyncUserURL('chatbox/syncuser/');
 
-                $( window ).load(function() {
+                $( window ).on('load',function() {
                     setTimeout(function(){
                         $('#messagesBlock').scrollTop($('#messagesBlock').prop('scrollHeight'));
                     },100);

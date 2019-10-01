@@ -9,7 +9,7 @@
 <div role="tabpanel">
 
 		<!-- Nav tabs -->
-		<ul class="nav nav-tabs" role="tablist">
+		<ul class="nav nav-tabs mb-2" role="tablist">
 		    <?php include(erLhcoreClassDesign::designtpl('lhchat/listchatconfig_tabs/links.tpl.php'));?>
 		</ul>
 
@@ -28,8 +28,8 @@
     			    <div role="tabpanel">
                       <!-- Nav tabs -->
                       <ul class="nav nav-tabs" role="tablist">
-                        <li role="presentation" class="active"><a href="#applicationame" aria-controls="applicationame" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Application name');?></a></li>
-                        <li role="presentation"><a href="#sitesettings" aria-controls="sitesettings" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Site settings');?></a></li>
+                        <li role="presentation" class="active nav-item"><a class="nav-link" href="#applicationame" aria-controls="applicationame" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Application name');?></a></li>
+                        <li role="presentation" class="nav-item"><a class="nav-link" href="#sitesettings" aria-controls="sitesettings" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Site settings');?></a></li>
                       </ul>                
                       <!-- Tab panes -->
                       <div class="tab-content">
@@ -89,6 +89,9 @@
                 <?php $attribute = 'track_footprint';$boolValue = true;?>
                 <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
 
+                <?php $attribute = 'footprint_background';$boolValue = true;?>
+                <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
                 <?php $attribute = 'cleanup_cronjob';$boolValue = true;?>
                 <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
 
@@ -113,7 +116,10 @@
     		    		    		    
     		    <?php $attribute = 'explicit_http_mode'?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
-    		    		    		    
+
+                <?php $attribute = 'no_wildcard_cookie';$boolValue = true;?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
     		    <?php $attribute = 'use_secure_cookie';$boolValue = true;?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
     		    		    		    
@@ -134,6 +140,9 @@
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
 
                 <?php $attribute = 'list_unread';$boolValue = true;?>
+    		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
+
+                <?php $attribute = 'preload_iframes';$boolValue = true;?>
     		    <?php include(erLhcoreClassDesign::designtpl('lhchat/part/chat_settings.tpl.php'));?>
 
     		    <?php $attribute = 'disable_popup_restore';$boolValue = true;?>
@@ -306,6 +315,6 @@
 
   
 <?php if ($currentUser->hasAccessTo('lhchat','administrateconfig')) : ?>
-<input type="submit" class="btn btn-default" name="UpdateConfig" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Update')?>"/>
+<input type="submit" class="btn btn-secondary" name="UpdateConfig" value="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/listchatconfig','Update')?>"/>
 <?php endif; ?>
 </form>

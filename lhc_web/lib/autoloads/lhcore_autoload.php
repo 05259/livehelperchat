@@ -119,7 +119,10 @@ return array_merge(array (
 
 		'erLhAbstractModelAutoResponder'  			=> 'lib/models/lhabstract/erlhabstractmodelautoresponder.php',
 		'erLhAbstractModelAutoResponderChat'  		=> 'lib/models/lhabstract/erlhabstractmodelautoresponderchat.php',
-    
+		'erLhAbstractModelChatVariable'  		    => 'lib/models/lhabstract/erlhabstractmodelchatvariable.php',
+		'erLhAbstractModelChatColumn'  		        => 'lib/models/lhabstract/erlhabstractmodelchatcolumn.php',
+		'erLhAbstractModelChatPriority'  		    => 'lib/models/lhabstract/erlhabstractmodelchatpriority.php',
+
 		'erLhAbstractModelSurvey'  			        => 'lib/models/lhabstract/erlhabstractmodelsurvey.php',
 		'erLhAbstractModelSurveyItem'  			    => 'lib/models/lhabstract/erlhabstractmodelsurveyitem.php',
 		'erLhcoreClassSurveyValidator'  			=> 'lib/core/lhsurvey/lhsurveyvalidator.php',
@@ -134,6 +137,7 @@ return array_merge(array (
 		'erLhAbstractModelProduct'  			    => 'lib/models/lhabstract/erlhabstractmodelproduct.php',
 		'erLhAbstractModelProductDepartament'  		=> 'lib/models/lhabstract/erlhabstractmodelproductdepartament.php',
 		'erLhAbstractModelRestAPIKey'  			    => 'lib/models/lhabstract/erlhabstractmodelrestapikey.php',
+		'erLhAbstractModelRestAPIKeyRemote'  		=> 'lib/models/lhabstract/erlhabstractmodelrestapikeyremote.php',
 
 		'erLhcoreClassFormRenderer'  		=> 'lib/core/lhform/lhformrenderer.php',
 		'erLhcoreClassAbstract' 			=> 'lib/core/lhabstract/lhabstract.php',
@@ -142,7 +146,8 @@ return array_merge(array (
 		// Subject
 	    'erLhAbstractModelSubject'	        => 'lib/models/lhabstract/erlhabstractmodelsubject.php',
 	    'erLhAbstractModelSubjectDepartment'=> 'lib/models/lhabstract/erlhabstractmodelsubjectdepartment.php',
-	    'erLhAbstractModelSubjectChat'=> 'lib/models/lhabstract/erlhabstractmodelsubjectchat.php',
+	    'erLhAbstractModelSubjectChat'      => 'lib/models/lhabstract/erlhabstractmodelsubjectchat.php',
+	    'erLhAbstractModelAudit'            => 'lib/models/lhabstract/erlhabstractmodelaudit.php',
 
 		// Chatbox
 		'erLhcoreClassChatbox'				=> 'lib/core/lhchatbox/lhchatbox.php',
@@ -213,7 +218,9 @@ return array_merge(array (
 		'MaxMind\Db\Reader'							=> 'lib/core/lhexternal/MaxMind/Db/Reader.php',		
 		'MaxMind\Db\Reader\Decoder'					=> 'lib/core/lhexternal/MaxMind/Db/Reader/Decoder.php',		
 		'MaxMind\Db\Reader\Metadata'				=> 'lib/core/lhexternal/MaxMind/Db/Reader/Metadata.php',		
-		'JsonSerializable'							=> 'lib/core/lhexternal/GeoIp2/Record/JsonSerializable.php',	
+		'JsonSerializable'							=> 'lib/core/lhexternal/GeoIp2/Record/JsonSerializable.php',
+
+		'lhCountries'						    	=> 'lib/core/lhexternal/lhcountries.php',
 
         // Speech
         'erLhcoreClassSpeech'                       => 'lib/core/lhspeech/lhspeech.php',
@@ -238,13 +245,21 @@ return array_merge(array (
 		'erLhcoreClassChatEvent'       				=> 'lib/core/lhchat/lhchatevent.php',
 
         // Bot classes
-        'erLhcoreClassModelGenericBotBot'           => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotbot.php',
+        'erLhcoreClassModelGenericBotBot'               => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotbot.php',
+        'erLhcoreClassModelGenericBotException'         => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotexception.php',
+        'erLhcoreClassModelGenericBotExceptionMessage'  => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotexceptionmessage.php',
+
         'erLhcoreClassModelGenericBotGroup'         => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotgroup.php',
         'erLhcoreClassModelGenericBotTrigger'       => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbottrigger.php',
         'erLhcoreClassModelGenericBotTriggerEvent'  => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbottriggerevent.php',
         'erLhcoreClassModelGenericBotPayload'       => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotpayload.php',
         'erLhcoreClassModelGenericBotChatWorkflow'  => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotchatworkflow.php',
         'erLhcoreClassModelGenericBotChatEvent'     => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotchatevent.php',
+        'erLhcoreClassModelGenericBotPendingEvent'  => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotpendingevent.php',
+        'erLhcoreClassModelGenericBotRepeatRestrict'=> 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotrepeatrestrict.php',
+
+        'erLhcoreClassModelGenericBotTrItem'        => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbottritem.php',
+        'erLhcoreClassModelGenericBotTrGroup'       => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbottrgroup.php',
 
         'erLhcoreClassGenericBot'                   => 'lib/core/lhgenericbot/lhgenericbot.php',
         'erLhcoreClassGenericBotWorkflow'           => 'lib/core/lhgenericbot/lhgenericbotworkflow.php',
@@ -260,9 +275,17 @@ return array_merge(array (
         'erLhcoreClassGenericBotActionCommand'      => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactioncommand.php',
         'erLhcoreClassGenericBotActionPredefined'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionpredefined.php',
         'erLhcoreClassGenericBotActionTyping'       => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactiontyping.php',
-		'erLhcoreClassGenericBotActionProgress'     => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionprogress.php',
-		'erLhcoreClassGenericBotActionVideo'        => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionvideo.php',
-		'erLhcoreClassGenericBotActionAttribute'    => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionattribute.php',
+        'erLhcoreClassGenericBotActionProgress'     => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionprogress.php',
+        'erLhcoreClassGenericBotActionVideo'        => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionvideo.php',
+        'erLhcoreClassGenericBotActionAttribute'    => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionattribute.php',
+        'erLhcoreClassGenericBotActionActions'      => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionactions.php',
+        'erLhcoreClassGenericBotActionIntent'       => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionintent.php',
+        'erLhcoreClassGenericBotActionIntentcheck'  => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionintentcheck.php',
+        'erLhcoreClassGenericBotActionConditions'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionconditions.php',
+        'erLhcoreClassGenericBotActionMatch_actions'=> 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionmatch_actions.php',
+        'erLhcoreClassGenericBotActionEvent_type'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionevent_type.php',
+        'erLhcoreClassGenericBotActionRepeat_restrict'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionrepeat_restrict.php',
+
 
         // Notifications
         'erLhcoreClassNotifications'                => 'lib/core/lhnotifications/lhnotifications.php',

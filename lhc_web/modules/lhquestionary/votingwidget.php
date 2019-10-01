@@ -170,7 +170,7 @@ if ($votingRelative !== false) {
 			}
 			
 			if (erLhcoreClassQuestionary::getCount($baseFilter,'lh_question_answer') > 0) {
-				$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('questionary/votingwidget','You have already send your feedback!');
+				$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('questionary/votingwidget','You have already sent your feedback!');
 			}
 		}
 
@@ -214,7 +214,7 @@ $Result['dynamic_height_message'] = 'lhc_sizing_questionary';
 
 if ($embedMode == true) {
 	$Result['dynamic_height_message'] = 'lhc_sizing_questionary_page';
-	$Result['pagelayout_css_append'] = 'embed-widget';
+	$Result['pagelayout_css_append'] = 'embed-widget embed-fixed';
 }
 
 ?>

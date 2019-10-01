@@ -4,6 +4,20 @@ class erLhcoreClassGenericBotActionText {
 
     public static function process($chat, $action, $trigger, $params)
     {
+        static $triggersProcessed = array();
+
+        // Message should be send only on start chat event, but we are not in start chat mode
+        if (in_array($trigger->id, $triggersProcessed) || isset($action['content']['attr_options']['on_start_chat']) && $action['content']['attr_options']['on_start_chat'] == true && erLhcoreClassGenericBotWorkflow::$startChat == false)
+        {
+            return;
+        }
+
+        // Send only once
+        if (isset($action['content']['attr_options']['on_start_chat']) && $action['content']['attr_options']['on_start_chat'] == true && erLhcoreClassGenericBotWorkflow::$startChat == true)
+        {
+            $triggersProcessed[] = $trigger->id;
+        }
+
         $msg = new erLhcoreClassModelmsg();
 
         $metaMessage = array();
@@ -73,10 +87,42 @@ class erLhcoreClassGenericBotActionText {
 
         if (isset($action['content']['html']) && !empty($action['content']['html']))
         {
-            $metaMessage['content']['html']['content'] = $action['content']['html'];
+            $metaMessage['content']['html']['content'] = erLhcoreClassGenericBotWorkflow::translateMessage($action['content']['html'], array('chat' => $chat));
         }
 
-        $msg->msg = isset($action['content']['text']) ? trim($action['content']['text']) : '';
+        if (isset($action['content']['attr_options']) && !empty($action['content']['attr_options']))
+        {
+            $metaMessage['content']['attr_options'] = $action['content']['attr_options'];
+        }
+
+        $action['content']['text'] = erLhcoreClassGenericBotWorkflow::translateMessage($action['content']['text'], array('chat' => $chat));
+
+        $msgData = explode('|||',(isset($action['content']['text']) ? trim($action['content']['text']) : ''));
+
+        $item = $msgData[0];
+        if (count($msgData) > 0){
+            $item = trim($msgData[mt_rand(0,count($msgData)-1)]);
+        }
+
+        $msg->msg = $item;
+
+        if (isset($params['error_code'])) {
+            $bot = erLhcoreClassModelGenericBotBot::fetch($trigger->bot_id);
+            if ($bot instanceof erLhcoreClassModelGenericBotBot) {
+                $configurationArray = $bot->configuration_array;
+                if (isset($configurationArray['exc_group_id']) && !empty($configurationArray['exc_group_id'])){
+                    $exceptionMessage = erLhcoreClassModelGenericBotExceptionMessage::findOne(array('limit' => 1, 'sort' => 'priority ASC', 'filter' => array('active' => 1,'code' => $params['error_code']), 'filterin' => array('exception_group_id' => $configurationArray['exc_group_id'])));
+                    if ($exceptionMessage instanceof erLhcoreClassModelGenericBotExceptionMessage && $exceptionMessage->message != '') {
+                        $params['replace_array']['{error}'] = erLhcoreClassGenericBotWorkflow::translateMessage($exceptionMessage->message, array('chat' => $chat));
+                    }
+                }
+            }
+        }
+
+        if (isset($params['replace_array'])) {
+            $msg->msg = str_replace(array_keys($params['replace_array']),array_values($params['replace_array']),$msg->msg);
+        }
+
         $msg->meta_msg = !empty($metaMessage) ? json_encode($metaMessage) : '';
         $msg->chat_id = $chat->id;
         $msg->name_support = erLhcoreClassGenericBotWorkflow::getDefaultNick($chat);

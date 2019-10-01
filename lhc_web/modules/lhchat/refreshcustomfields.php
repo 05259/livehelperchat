@@ -33,7 +33,7 @@ if ($Params['user_parameters_unordered']['hash'] != '' || $Params['user_paramete
             $chat = false;
         }
 
-        if ( (($checkHash == true && $chat !== false && $chat->hash == $hash) || $checkHash == false) && ( is_object($vid) || ($chat !== false && $chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT || $chat->status == erLhcoreClassModelChat::STATUS_ACTIVE_CHAT))) {
+        if ( (($checkHash == true && $chat !== false && $chat->hash == $hash) || $checkHash == false) && ( is_object($vid) || ($chat !== false && ($chat->status == erLhcoreClassModelChat::STATUS_BOT_CHAT || $chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT || $chat->status == erLhcoreClassModelChat::STATUS_ACTIVE_CHAT)))) {
             
             if ($chat instanceof erLhcoreClassModelChat)
             {
@@ -48,7 +48,7 @@ if ($Params['user_parameters_unordered']['hash'] != '' || $Params['user_paramete
                 erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.data_changed_chat', array(
                     'chat' => & $chat
                 ));
-            }       
+            }
             echo json_encode(array('stored' => 'true'));
             exit;
         }

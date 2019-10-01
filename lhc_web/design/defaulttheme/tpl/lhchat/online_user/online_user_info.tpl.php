@@ -1,4 +1,4 @@
-<div class="pull-right">
+<div class="float-right">
 <p class="fs12">
 <?php if ( !empty($online_user->user_country_code) ) : ?><img src="<?php echo erLhcoreClassDesign::design('images/flags');?>/<?php echo $online_user->user_country_code?>.png" alt="<?php echo htmlspecialchars($online_user->user_country_name)?>" title="<?php echo htmlspecialchars($online_user->user_country_name)?>" /><?php endif; ?> (<?php echo htmlspecialchars($online_user->ip)?>)
 <?php if ( !empty($online_user->city) ) :?><br/><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','City');?>: <?php echo htmlspecialchars($online_user->city) ?><?php endif;?>
@@ -10,11 +10,27 @@
 <?php if (!empty($online_user->identifier)) : ?><br/><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','Identifier');?> - <?php echo htmlspecialchars($online_user->identifier)?><?php endif;?>
 </p>
 
+<?php if ($online_user->nick != '' && $online_user->has_nick) : ?>
+    <h5><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','Nick')?></h5>
+    <p><?php echo htmlspecialchars($online_user->nick)?></p>
+<?php endif; ?>
+
 <?php if ($online_user->online_attr != '') : ?>
 <h5><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','Additional information')?></h5>
-<pre>
-<?php echo htmlspecialchars(json_encode(json_decode($online_user->online_attr),JSON_PRETTY_PRINT));?>
-</pre>
+    <ul class="circle">
+        <?php foreach (json_decode($online_user->online_attr,true) as $attrKey => $addItem) : ?>
+        <?php if (isset($addItem['key'])) : ?>
+            <li<?php if (isset($addItem['identifier'])): ?> title="<?php echo htmlspecialchars($addItem['identifier'])?>"<?php endif;?>><?php echo htmlspecialchars($addItem['key'])?> - <?php echo htmlspecialchars($addItem['value'])?>
+                <?php if (isset($addItem['h']) && $addItem['h'] == true) : ?>&nbsp;<i class="material-icons" title="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/adminchat','Hidden field')?>">visibility_off</i><?php endif;?>
+                <?php if (isset($addItem['url']) && $addItem['url'] == true) : ?>&nbsp;<i class="material-icons" title="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/adminchat','Identifier')?> - <?php echo htmlspecialchars($addItem['identifier'])?>">link</i><?php endif;?>
+            </li>
+        <?php else : ?>
+        <li>
+            <?php if (!is_numeric($attrKey)) :?><?php echo htmlspecialchars($attrKey)?> - <?php endif?><?php echo htmlspecialchars(json_encode($addItem,JSON_PRETTY_PRINT));?>
+         </li>
+        <?php endif; ?>
+    <?php endforeach; ?>
+    </ul>
 <?php endif;?>
 </div>
 

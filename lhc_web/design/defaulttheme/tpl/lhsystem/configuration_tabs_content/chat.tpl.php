@@ -9,8 +9,10 @@
         		    <?php endif; ?>
         		   
         		    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/blockusers.tpl.php'));?>
-        		    
-        		    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_configuration.tpl.php'));?>
+
+                    <?php if ($currentUser->hasAccessTo('lhchat','administrateconfig')) : ?>
+        		        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_configuration.tpl.php'));?>
+                    <?php endif; ?>
 
                     <?php if ($currentUser->hasAccessTo('lhsystem','transferconfiguration')) : ?>
                     <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/transfer_configuration.tpl.php'));?>
@@ -20,12 +22,10 @@
         		    
         		    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/geoadjustment.tpl.php'));?>
         			
-        			<?php if ($currentUser->hasAccessTo('lhchat','administrateconfig')) : ?>
-        			<?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/syncandsoundesetting.tpl.php'));?>
-        		    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/start_chat_form_settings.tpl.php'));?>
-        		    
-        		    <?php endif;?>
-        		    		    
+                    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/syncandsoundesetting.tpl.php'));?>
+
+                    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/start_chat_form_settings.tpl.php'));?>
+
          			<?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/translation.tpl.php'));?>
         		    
                     <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/cannedmsg.tpl.php'));?>
@@ -37,7 +37,12 @@
                     <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/offline_settings.tpl.php'));?>
 
         		    <?php if ($currentUser->hasAccessTo('lhabstract','use')) : ?>
-        
+                        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_variables_settings.tpl.php'));?>
+
+                        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_column_settings.tpl.php'));?>
+
+                        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_priority_settings.tpl.php'));?>
+
         		   		<?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/proactive.tpl.php'));?>	
         		   		
         		   		<?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/proactive_variables.tpl.php'));?>	
@@ -54,7 +59,7 @@
         	
         	        <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_list.tpl.php'));?>
         
-        		    <?php if ($currentUser->hasAccessTo('lhchatarchive','archive')) : ?>
+        		    <?php if ($currentUser->hasAccessTo('lhchatarchive','archive') || $currentUser->hasAccessTo('lhchatarchive','configuration')) : ?>
         		    <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/chat_archive.tpl.php'));?>
         		    <?php endif; ?>
         			

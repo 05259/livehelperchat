@@ -562,20 +562,20 @@ class erLhcoreClassBBCode
    }
 
    public static $replaceEmoji = array(
-       ':\)' => '&#x1F642;',
-       ':D:' => '&#x1F600;',
-       ':D' => '&#x1F600;',
-       ':\(' => '&#x1F641;',
-       ':o:' => '&#x1F62E;',
-       ':o' => '&#x1F62E;',
-       ':p:' => '&#x1F61B;',
-       ':p' => '&#x1F61B;',
-       ';\)' => '&#x1F609;',
-       ';\(' => '&#x1F622;',
-       ':x' => '&#x1F910;',
-       ':\*' => '&#x1F617;',
-       ';\*' => '&#x1F618;',
-       ':\/' => '&#x1F615;'
+       ':\)' => "\u{1F642}",
+       ':D:' => "\u{1F600}",
+       ':D' => "\u{1F600}",
+       ':\(' => "\u{1F641}",
+       ':o:' => "\u{1F62E}",
+       ':o' => "\u{1F62E}",
+       ':p:' => "\u{1F61B}",
+       ':p' => "\u{1F61B}",
+       ';\)' => "\u{1F609}",
+       ';\(' => "\u{1F622}",
+       ':x' => "\u{1F910}",
+       ':\*' => "\u{1F617}",
+       ';\*' => "\u{1F618}",
+       ':\/' => "\u{1F615}"
    );
 
    public static function parseEmoji($text) {
@@ -615,22 +615,26 @@ class erLhcoreClassBBCode
     	$in = array( 	 '/\[b\](.*?)\[\/b\]/ms',
     					 '/\[i\](.*?)\[\/i\]/ms',
     					 '/\[u\](.*?)\[\/u\]/ms',
+    					 '/\[mark\](.*?)\[\/mark\]/ms',
     					 '/\[s\](.*?)\[\/s\]/ms',
     					 '/\[list\=(.*?)\](.*?)\[\/list\]/ms',
     					 '/\[list\](.*?)\[\/list\]/ms',
     					 '/\[\*\]\s?(.*?)\n/ms',
-    					 '/\[fs(.*?)\](.*?)\[\/fs(.*?)\]/ms'
+    					 '/\[fs(.*?)\](.*?)\[\/fs(.*?)\]/ms',
+    					 '/\[color\=(.*?)\](.*?)\[\/color\]/ms'
     	);
 
     	// And replace them by...
     	$out = array(	 '<strong>\1</strong>',
     					 '<em>\1</em>',
     					 '<u>\1</u>',
+    					 '<mark>\1</mark>',
     					 '<strike>\1</strike>',
     					 '<ol start="\1">\2</ol>',
     					 '<ul>\1</ul>',
     					 '<li>\1</li>',
-    					 '<span style="font-size:\1px">\2</span>'
+    					 '<span style="font-size:\1pt">\2</span>',
+    					 '<span style="color:#\1">\2</span>'
     	);
 
     	$text = preg_replace($in, $out, $text);
@@ -659,16 +663,35 @@ class erLhcoreClassBBCode
     	return $text;
     }
 
-    public static function _make_url_embed_image($matches){
+    public static function _make_url_embed_image($matches) {
 
-        $in = htmlspecialchars_decode($matches[1]);
+        $in = htmlspecialchars_decode($matches[2]);
         $in = trim($in);
-        
+
         $url = self::esc_url($in);
         if ( empty($url) )
-            return '[img]' . $matches[1] . '[img]';
-           
-        return "<div class=\"img_embed\"><img src=\"".$url."\" alt=\"\" /></div>";        
+            return '[img]' . $matches[2] . '[img]';
+
+        $prepend = '';
+        $append = '';
+        if (isset($matches[1]) && $matches[1] != '' && !empty(self::esc_url($matches[1]))) {
+            $prepend = '<a class="link" target="_blank" href="' . $matches[1] . '">';
+            $append = '</a>';
+        }
+
+        return  "<div class=\"img_embed\">{$prepend}<img class='img-fluid' src=\"".$url."\" alt=\"\" />{$append}</div>";
+   }
+
+   public static function _make_embed_map($matches)
+   {
+       $parts = explode(',',trim($matches[1]));
+
+       if (count($parts) == 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+           $id = rand(0,1000) . time();
+           return "<div id='msg-location-".$id."' style='height:300px'><script>lhinst.showMessageLocation(" . $id . "," . (real)$parts[0] . "," . (real)$parts[1] . ")</script></div>";
+       }
+
+       return ;
    }
 
    public static function _make_url_embed($matches){
@@ -680,7 +703,7 @@ class erLhcoreClassBBCode
         if ( empty($url) )
             return '[url='.$matches[1].']' . $matches[2] . '[/url]';
 				
-        return '<a class=\"link\" target=\"_blank\" rel=\"noopener\" href="'.$url.'">' . $matches[2] . '</a>';
+        return '<a class="link" target="_blank" rel="noopener" href="'.$url.'">' . $matches[2] . '</a>';
    }
       
    /**
@@ -723,7 +746,7 @@ class erLhcoreClassBBCode
      */
    public static function _make_email_clickable_cb( $matches ) {
     	$email = $matches[2] . '@' . $matches[3];
-    	return $matches[1] . "<a href=\"mailto:$email\">$email</a>";
+    	return $matches[1] . "<a class=\"link\" href=\"mailto:$email\">$email</a>";
    }
 
    
@@ -752,7 +775,7 @@ class erLhcoreClassBBCode
          if (isset($data['query'])){
              parse_str($data['query'],$query);
              if (stristr($data['host'],'youtube.com') && isset($query['v']) && ($query['v'] != '')) {
-                 return '<iframe class="youtube-frame" title="YouTube video player" width="480" height="300" src="http://www.youtube.com/embed/'.urlencode($query['v']).'" frameborder="0" allowfullscreen></iframe>';
+                 return '<iframe class="youtube-frame" title="YouTube video player" width="480" height="300" src="https://www.youtube.com/embed/'.urlencode($query['v']).'" frameborder="0" allowfullscreen></iframe>';
              } else {
                  return $matches[0];
              }
@@ -763,8 +786,13 @@ class erLhcoreClassBBCode
 
    public static function _make_url_file($matches)
    {
+
    		if (isset($matches[1])){
-   			list($fileID,$hash) = explode('_',$matches[1]);
+   		    $mainData = explode(' ',$matches[1]);
+   		    $parts = explode('_',$mainData[0]);
+   			$fileID = $parts[0];
+   			$hash = $parts[1];
+   			$displayType = isset($parts[2]) ? $parts[2] : null;
    			try {
    				$file = erLhcoreClassModelChatFile::fetch($fileID);
 
@@ -778,13 +806,35 @@ class erLhcoreClassBBCode
                     if ($hash == md5($name . '_' . $file->chat_id)) {
                         $hash = md5($file->name . '_' . $file->chat_id);
 
+                        $fileExtension = strtolower($file->extension);
+                        if ($displayType == 'img' && $fileExtension == 'jpg' || $fileExtension == 'jpeg' || $fileExtension == 'png'){
+
+                            // Make link if required
+                            $prepend = '';
+                            $append = '';
+                            if (isset($mainData[1])) {
+                                $subpartParts = explode('=',$mainData[1]);
+                                if ($subpartParts[0] == 'link') {
+                                    $url = self::esc_url($subpartParts[1]);
+                                    if ($url != ''){
+                                        $prepend = '<a class="link" target="_blank" href="' . self::esc_url($subpartParts[1]) . '">';
+                                        $append = '</a>';
+                                    }
+                                }
+                            } else {
+                                $prepend = '';
+                                $append = '<a class="hidden-download" href="'.erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}".'"></a>';
+                            }
+                            return $prepend . '<img id="img-file-' . $file->id . '" class="img-fluid" src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '" alt="" />' . $append;
+                        }
+
                         $audio = '';
-                        if ($file->extension == 'mp3' || $file->extension == 'wav' || $file->extension == 'ogg') {
+                        if ($fileExtension == 'mp3' || $fileExtension == 'wav' || $fileExtension == 'ogg') {
                             $audio = '<br/><audio controls><source src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '" type="' . $file->type . '"></audio>';
-                        } elseif ($file->extension == 'mp4' || $file->extension == 'avi' || $file->extension == 'mov' || $file->extension == 'ogg') {
-                            $audio = '<br><div class="embed-responsive embed-responsive-16by9"><video class="class="embed-responsive-item" controls><source src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '"></vidio></div>';
-                        } else if ($file->extension == 'jpg' || $file->extension == 'jpeg' || $file->extension == 'png') {
-                            $audio = ' <a onclick="$(\'#img-file-' . $file->id . '\').toggleClass(\'hide\')"><i class="material-icons mr-0">&#xE251;</i></a><br/><img id="img-file-' . $file->id . '" class="img-responsive hide" src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '" alt="" />';
+                        } elseif ($fileExtension == 'mp4' || $fileExtension == 'avi' || $fileExtension == 'mov' || $fileExtension == 'ogg' || $fileExtension == '3gpp') {
+                            $audio = '<br><div class="embed-responsive embed-responsive-16by9"><video class="embed-responsive-item" controls><source src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '"></video></div>';
+                        } else if ($fileExtension == 'jpg' || $fileExtension == 'jpeg' || $fileExtension == 'png') {
+                            $audio = ' <a class="link" onclick="$(\'#img-file-' . $file->id . '\').toggleClass(\'hide\')"><i class="material-icons mr-0">&#xE251;</i></a><br/><img id="img-file-' . $file->id . '" class="img-fluid hide" src="' . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}" . '" alt="" />';
                         }
 
                         return "<a href=\"" . erLhcoreClassDesign::baseurl('file/downloadfile') . "/{$file->id}/{$hash}\" target=\"_blank\" rel=\"noopener\" class=\"link\" >" . erTranslationClassLhTranslation::getInstance()->getTranslation('file/file', 'Download file') . ' - ' . htmlspecialchars($file->upload_name) . ' [' . $file->extension . ']' . "</a>" . $audio;
@@ -936,18 +986,93 @@ class erLhcoreClassBBCode
        }
    }
 
+   public static function extractMetaByMessage(& $msg) {
+       $meta = array();
+       if (strpos($msg,'[html_snippet]') !== false) {
+           $matches = array();
+           preg_match_all('/\[html_snippet\](.*?)\[\/html_snippet\]/is',$msg,$matches);
+           foreach ($matches[0] as $index => $match) {
+               $msg = str_replace($match,'',$msg);
+               $meta['html_snippet'][] = $matches[1][$index];
+           }
+       }
+       return $meta;
+   }
+
+   public static function makeSubmessages($msg, $paramsMessage = array()) {
+
+       // Links wraps images
+       $msg = preg_replace('#\[url\="?(.*?)"?\]\[file="?(.*?)_img"?\]\[\/url\]#is','[file=\2_img link=\1]',$msg);
+
+       // pure files
+       $msg = preg_replace('#\[file="?(.*?)_img"?(.*?)\]#is','IMG_REPLACE[file=\1_img\2]IMG_REPLACE',$msg);
+
+       // Images within links
+       $msg = preg_replace('#\[url\="?(.*?)"?\]\[img\](.*?)\[\/img\]\[\/url\]#is','[img=\1]\2[/img]',$msg);
+
+       // Pure images
+       $msg = preg_replace('#\[img(.*?)\](.*?)\[\/img\]#is','IMG_REPLACE[img\1]\2[/img]IMG_REPLACE',$msg);
+
+       $messages = array_filter(explode('IMG_REPLACE', $msg));
+
+       $messagesData = array();
+       foreach ($messages as $message) {
+           $message = trim($message);
+           if ($message != '')
+           {
+               $msgRendered = erLhcoreClassBBCode::make_clickable(htmlspecialchars($message), $paramsMessage);
+
+               $messagesDataItem['body'] = $msgRendered;
+               $messagesDataItem['flags'] = [];
+
+               $msgRenderedMedia = strip_tags($msgRendered);
+               $emojiMessage = trim(preg_replace('#([\x{2B50}-\x{2B55}]|[\x{23F0}-\x{23F3}]|[\x{231A}-\x{231B}]|[\x{1F600}-\x{1F64F}]|[\x{1F910}-\x{1F9FF}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}])#u','', $msgRendered));
+
+               if ($msgRenderedMedia == '') {
+                   $messagesDataItem['flags'][] = 'img';
+               }
+
+               if ($emojiMessage == '') {
+                   $messagesDataItem['flags'][] = 'emoji';
+               }
+
+               $messagesData[] = $messagesDataItem;
+           }
+       }
+
+       return $messagesData;
+   }
+
    // Converts bbcode and general links to hmtl code
-   public static function make_clickable($ret) {
+   public static function make_clickable($ret, $paramsMessage = array()) {
         $ret = ' ' . $ret;
 
         $makeLinksClickable = true;
         
         erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.before_make_clickable',array('msg' => & $ret, 'makeLinksClickable' => & $makeLinksClickable));
 
-        $ret = preg_replace_callback('/\[img\](.*?)\[\/img\]/ms', "erLhcoreClassBBCode::_make_url_embed_image", $ret);
-        
+        $ret = preg_replace_callback('/\[img=?(.*?)\](.*?)\[\/img\]/ms', "erLhcoreClassBBCode::_make_url_embed_image", $ret);
+
+        $ret = preg_replace_callback('/\[loc\](.*?)\[\/loc\]/ms', "erLhcoreClassBBCode::_make_embed_map", $ret);
+
         $ret = preg_replace_callback('/\[url\="?(.*?)"?\](.*?)\[\/url\]/ms', "erLhcoreClassBBCode::_make_url_embed", $ret);
-        
+
+        if (isset($paramsMessage['sender']) && $paramsMessage['sender'] == 0) {
+            $ret = preg_replace('/\[html\](.*?)\[\/html\]/ms','',$ret);
+        }
+
+        $ret = preg_replace_callback('/\[html\](.*?)\[\/html\]/ms', function ($matches) {
+            $html = htmlspecialchars_decode($matches[1]);
+
+            $html = preg_replace_callback('/"window\.parent\.(.*)"/ms',function ($matches){
+                return "'lhinst.executeRemoteCommands([\"lhc_eval:" . $matches[1] . "\"])'";
+            },$html);
+
+            return $html;
+
+        }, $ret);
+
+
         if ($makeLinksClickable) {
             $ret = self::make_clickable_text($ret);           
         }

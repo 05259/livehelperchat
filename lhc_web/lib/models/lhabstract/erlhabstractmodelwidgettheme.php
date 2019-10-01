@@ -190,7 +190,11 @@ class erLhAbstractModelWidgetTheme {
 	
 	public function getModuleTranslations()
 	{
-	    $metaData = array('path' => array('url' => erLhcoreClassDesign::baseurl('theme/index'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('theme/index','Themes')), 'permission_delete' => array('module' => 'lhchat','function' => 'administratethemes'),'permission' => array('module' => 'lhchat','function' => 'administratethemes'),'name' => erTranslationClassLhTranslation::getInstance()->getTranslation('abstract/widgettheme','Widget themes'));
+	    $metaData = array(
+	    'path' => array(
+            array('url' => erLhcoreClassDesign::baseurl('system/configuration'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('department/edit','System configuration')),
+	        array('url' => erLhcoreClassDesign::baseurl('theme/index'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('theme/index','Themes'))
+        ), 'permission_delete' => array('module' => 'lhchat','function' => 'administratethemes'),'permission' => array('module' => 'lhchat','function' => 'administratethemes'),'name' => erTranslationClassLhTranslation::getInstance()->getTranslation('abstract/widgettheme','Widget themes'));
 	    
 	    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('feature.can_use_themes', array('object_meta_data' => & $metaData));
 	    
@@ -250,6 +254,7 @@ class erLhAbstractModelWidgetTheme {
 
                $this->replace_array = array(
                    'search' => array(
+                       '{{host}}',
                        '{{logo_image_url}}',
                        '{{minimize_image_url}}',
                        '{{restore_image_url}}',
@@ -262,6 +267,7 @@ class erLhAbstractModelWidgetTheme {
                        '{{offline_image_url}}',
                    ),
                    'replace' => array(
+                       $host,
                        $host . $this->logo_image_url,
                        $host . $this->minimize_image_url,
                        $host . $this->restore_image_url,
@@ -382,6 +388,12 @@ class erLhAbstractModelWidgetTheme {
         $this->notification_configuration = json_encode($this->notification_configuration_array);
     }
 
+    public function beforeSave()
+    {
+        $this->bot_configuration = json_encode($this->bot_configuration_array);
+        $this->notification_configuration = json_encode($this->notification_configuration_array);
+    }
+    
 	public function dependCss()
     {
 		return '<link rel="stylesheet" type="text/css" href="'.erLhcoreClassDesign::design('css/colorpicker.css').'" />';
@@ -389,7 +401,7 @@ class erLhAbstractModelWidgetTheme {
 
 	public function dependJs()
     {
-		return '<script type="text/javascript" src="'.erLhcoreClassDesign::design('js/colorpicker.js').'"></script>';
+		return '<script type="text/javascript" src="'.erLhcoreClassDesign::designJS('js/colorpicker.js;js/ace/ace.js').'"></script>';
 	}
 	
 	public function customForm()

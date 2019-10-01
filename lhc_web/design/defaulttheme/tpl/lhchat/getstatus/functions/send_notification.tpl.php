@@ -76,7 +76,7 @@ sendNotification : function() {
         });
 
         var xhr = new XMLHttpRequest();
-        xhr.open( "POST", '<?php echo erLhcoreClassModelChatConfig::fetch('explicit_http_mode')->current_value?>//<?php echo $_SERVER['HTTP_HOST']?><?php echo erLhcoreClassDesign::baseurlsite()?>'+that.lang+'/notifications/subscribe<?php $theme !== false ? print '/(theme)/'.$theme->id : ''?>' + (subscribe == true ? '/(action)/sub' : '/(action)/unsub') + that.getAppendCookieArguments(), true);
+        xhr.open( "POST", '<?php echo erLhcoreClassModelChatConfig::fetch('explicit_http_mode')->current_value?>//<?php echo $_SERVER['HTTP_HOST']?><?php echo erLhcoreClassDesign::baseurlsite()?>'+that.lang+'/notifications/subscribe<?php $theme !== false ? print '/(theme)/' . (is_object($theme) ? $theme->id : $theme) : ''?>' + (subscribe == true ? '/(action)/sub' : '/(action)/unsub') + that.getAppendCookieArguments(), true);
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         xhr.send( "data=" + encodeURIComponent( payload ) );
     }
@@ -86,16 +86,16 @@ sendNotification : function() {
     function subscribeUser() {
         var applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
         swRegistration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: applicationServerKey
+            'userVisibleOnly': true,
+            'applicationServerKey': applicationServerKey
         }).then(function(subscription) {
             <?php /*console.log('User just subscribed subscribed.');*/ ?>
             updateSubscriptionOnServer(subscription, true);
             that.isNotificationsSubscribed = true;
             <?php /*alert('You have subscribed!');*/ ?>
-        }).catch(function(err) {
-            <?php /*console.log('Failed to subscribe the user: ', err);*/ ?>
-        });
+        })<?php /*.catch(function(err) {
+            console.log('Failed to subscribe the user: ', err);
+        })*/ ?>;
     }
 
     function unsubscribeUser() {
@@ -104,9 +104,9 @@ sendNotification : function() {
                 updateSubscriptionOnServer(subscription,false);
                 return subscription.unsubscribe();
             }
-        }).catch(function(error) {
-            <?php /*console.log('Error unsubscribing', error);*/ ?>
-        }).then(function() {
+        })<?php /*.catch(function(error) {
+            console.log('Error unsubscribing', error);
+        })*/ ?>.then(function() {
         <?php /*console.log('User is unsubscribed.');*/ ?>
                 alert('You have unsubscribed!');
             that.isNotificationsSubscribed = false;
@@ -133,15 +133,15 @@ sendNotification : function() {
         <?php /*console.log('Service Worker is registered', swReg);*/ ?>
         swRegistration = swReg;
         initializeUI();
-    }).catch(function(error) {
-        <?php /*console.error('Service Worker Error', error);*/ ?>
-    });
+    })<?php /*.catch(function(error) {
+        console.error('Service Worker Error', error);
+    })*/ ?>;
     <?php endif; ?>
 },
 
 readNotification : function(chat_id, hash) {
     <?php $notificationsSettings = erLhcoreClassModelChatConfig::fetch('notifications_settings')->data_value;?>
     <?php if (isset($notificationsSettings['enabled']) && $notificationsSettings['enabled'] == 1) : ?>
-        this.showStartWindow("<?php echo erLhcoreClassModelChatConfig::fetch('explicit_http_mode')->current_value?>//<?php echo $_SERVER['HTTP_HOST']?><?php echo erLhcoreClassDesign::baseurlsite()?>"+this.lang+"/notifications/read/<?php $theme !== false ? print '/(theme)/'.$theme->id : ''?>/(id)/"+chat_id+"/(hashread)/"+hash+"/(mode)/widget");
+        this.showStartWindow("<?php echo erLhcoreClassModelChatConfig::fetch('explicit_http_mode')->current_value?>//<?php echo $_SERVER['HTTP_HOST']?><?php echo erLhcoreClassDesign::baseurlsite()?>"+this.lang+"/notifications/read/<?php $theme !== false ? print '/(theme)/'.(is_object($theme) ? $theme->id : $theme) : ''?>/(id)/"+chat_id+"/(hashread)/"+hash+"/(mode)/widget");
     <?php endif; ?>
 },

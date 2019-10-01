@@ -20,6 +20,9 @@ class erLhcoreClassAdminChatValidatorHelper {
             'ExplainHover' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
             ),
+            'HTMLSnippet' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+            ),
             'Position' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'int',array()
             ),
@@ -74,6 +77,13 @@ class erLhcoreClassAdminChatValidatorHelper {
         {
             $cannedMessage->title = $form->Title;
         }
+
+        if ( $form->hasValidData( 'HTMLSnippet' ) )
+        {
+            $cannedMessage->html_snippet = $form->HTMLSnippet;
+        } else {
+            $cannedMessage->html_snippet = '';
+        }
         
         if ( $form->hasValidData( 'ExplainHover' ) )
         {
@@ -101,26 +111,26 @@ class erLhcoreClassAdminChatValidatorHelper {
         {
             $cannedMessage->tags_plain = $form->Tags;
         }
-        
+
+        if (strpos($cannedMessage->tags_plain,'#') !== false)
+        {
+            $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Canned message tags should not contain # character');
+        }
+
         if ( $form->hasValidData( 'DepartmentID' )  ) {
             $cannedMessage->department_id = $form->DepartmentID;
             if ($userDepartments !== true) {
-                if (!in_array($cannedMessage->department_id, $userDepartments)) {
-                    $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please choose a department');
+                if ($cannedMessage->department_id != 0 && !in_array($cannedMessage->department_id, $userDepartments)) {
+                    $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please choose a department!');
                 }
             }
         } else {
             
             $response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.validate_canned_msg_user_departments',array('canned_msg' => & $cannedMessage, 'errors' => & $Errors));
-            
+
             // Perhaps extension did some internal validation and we don't need anymore validate internaly
             if ($response === false) {            
-                // User has to choose a department
-                if ($userDepartments !== true) {
-                    $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please choose a department');
-                } else {
-                    $cannedMessage->department_id = 0;
-                }
+                $cannedMessage->department_id = 0;
             }
         }
         
@@ -171,6 +181,13 @@ class erLhcoreClassAdminChatValidatorHelper {
 	        ),
 	        'OfflineNameRequireOption' => new ezcInputFormDefinitionElement(
 	            ezcInputFormDefinitionElement::OPTIONAL, 'string'
+	        ),
+
+            'pre_chat_html' => new ezcInputFormDefinitionElement(
+	            ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+	        ),
+            'pre_offline_chat_html' => new ezcInputFormDefinitionElement(
+	            ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
 	        ),
 	    
 	        // E-mail options
@@ -280,6 +297,12 @@ class erLhcoreClassAdminChatValidatorHelper {
             'AutoStartChat' => new ezcInputFormDefinitionElement(
 	            ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
 	        ),
+            'MobilePopup' => new ezcInputFormDefinitionElement(
+	            ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+	        ),
+            'DontAutoProcess' => new ezcInputFormDefinitionElement(
+	            ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+	        ),
 	    
 	        // TOS
 	        'OfflineTOSVisibleInPopup' => new ezcInputFormDefinitionElement(
@@ -346,11 +369,6 @@ class erLhcoreClassAdminChatValidatorHelper {
 	        'CustomFieldsEncryption' => new ezcInputFormDefinitionElement(
 	            ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
 	        ),
-	        'CustomFieldsEncryptionHMac' => new ezcInputFormDefinitionElement(
-	            ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw' 
-	        ),
-
-
             'customFieldURLIdentifier' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw', null, FILTER_REQUIRE_ARRAY
             ),
@@ -377,6 +395,18 @@ class erLhcoreClassAdminChatValidatorHelper {
 	        $data['auto_start_chat'] = false;
 	    }
 
+	    if ( $form->hasValidData( 'MobilePopup' ) && $form->MobilePopup == true ) {
+	        $data['mobile_popup'] = true;
+	    } else {
+	        $data['mobile_popup'] = false;
+	    }
+
+	    if ( $form->hasValidData( 'DontAutoProcess' ) && $form->DontAutoProcess == true ) {
+	        $data['dont_auto_process'] = true;
+	    } else {
+	        $data['dont_auto_process'] = false;
+	    }
+	    
 	    // TOS
 	    if ( $form->hasValidData( 'TOSVisibleInPopup' ) && $form->TOSVisibleInPopup == true ) {
 	        $data['tos_visible_in_popup'] = true;
@@ -485,16 +515,6 @@ class erLhcoreClassAdminChatValidatorHelper {
 	        $data['custom_fields_encryption'] = '';
 	    }
 
-	    if ( $form->hasValidData( 'CustomFieldsEncryptionHMac' ) && $form->CustomFieldsEncryptionHMac != '' ) {
-	        if (strlen($form->CustomFieldsEncryptionHMac) < 40) {
-	            $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Minimum 40 characters for additional encryption key!');
-	        } else {
-	            $data['custom_fields_encryption_hmac'] = $form->CustomFieldsEncryptionHMac;
-	        }
-	    } else {
-	        $data['custom_fields_encryption_hmac'] = '';
-	    }
-
 	    // Name offline
 	    if ( $form->hasValidData( 'OfflineNameVisibleInPopup' ) && $form->OfflineNameVisibleInPopup == true ) {
 	        $data['offline_name_visible_in_popup'] = true;
@@ -519,7 +539,19 @@ class erLhcoreClassAdminChatValidatorHelper {
 	    } else {
 	        $data['offline_name_require_option'] = 'required';
 	    }
-	    
+
+	    if ( $form->hasValidData( 'pre_chat_html' ) && $form->pre_chat_html != '' ) {
+	        $data['pre_chat_html'] = $form->pre_chat_html;
+	    } else {
+	        $data['pre_chat_html'] = '';
+	    }
+
+	    if ( $form->hasValidData( 'pre_offline_chat_html' ) && $form->pre_offline_chat_html != '' ) {
+	        $data['pre_offline_chat_html'] = $form->pre_offline_chat_html;
+	    } else {
+	        $data['pre_offline_chat_html'] = '';
+	    }
+
 	    if ($data['name_visible_in_popup'] == true && $data['name_require_option'] == 'required') {
 	        $hasValidPopupData = true;
 	    }
@@ -760,22 +792,6 @@ class erLhcoreClassAdminChatValidatorHelper {
 	        $data['custom_fields'] = json_encode($customFields,JSON_HEX_APOS);
 	    } else {
 	        $data['custom_fields'] = '';
-	    }
-	    
-	    if ($data['message_visible_in_popup'] == true && $data['message_require_option'] == 'required') {
-	        $hasValidPopupData = true;
-	    }
-	    
-	    if ($data['message_visible_in_page_widget'] == true && $data['message_require_option'] == 'required') {
-	        $hasWidgetData = true;
-	    }
-	    
-	    if ($hasValidPopupData == false){
-	        $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Please choose at least one field for a popup');
-	    }
-	    
-	    if ($hasWidgetData == false){
-	        $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Please choose at least one field for a page widget');
 	    }
 	    
 	    return $Errors;

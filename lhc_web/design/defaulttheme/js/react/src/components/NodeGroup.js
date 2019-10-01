@@ -46,7 +46,9 @@ class NodeGroup extends Component {
     }
 
     deleteGroup() {
-        this.props.dispatch(deleteGroup({id: this.props.group.get('id')}));
+        if (confirm('Are you sure?')){
+            this.props.dispatch(deleteGroup({id: this.props.group.get('id')}));
+        }
     }
 
     /*shouldComponentUpdate(nextProps, nextState) {
@@ -77,27 +79,43 @@ class NodeGroup extends Component {
             var triggerAction = "";
         }
 
+        var classNameCurrent = "material-icons chat-active";
+
+        if (this.props.group.get('bot_id') != this.props.botId) {
+            classNameCurrent = "material-icons chat-unread";
+        }
+
         return (
-
-
-
             <div className="row">
-                <div className="col-xs-12">
+                <div className="col-12">
                     <hr/>
 
                     <div className="row">
-                        <div className="col-xs-10">
-                            <input className="form-control gbot-group-name" value={this.props.group.get('name')} onChange={this.handleChange.bind(this)} />
+                        <div className="col-9">
+                            <div className="input-group">
+                                <div className="input-group-prepend">
+                                    <span><i className={classNameCurrent} title={'Bot Id - '+this.props.group.get('bot_id')}>home</i></span>
+                                </div>
+                                <input className="form-control form-control-sm gbot-group-name" value={this.props.group.get('name')} onChange={this.handleChange.bind(this)} />
+                            </div>
                         </div>
-                        <div className="col-xs-2">
-                            <a className="pull-right" onClick={this.deleteGroup.bind(this)}><i className="material-icons mr-0">delete</i></a>
+                        <div className="col-3">
+                            <div className="btn-group" role="group" aria-label="Basic example">
+                                <a className="btn btn-sm btn-secondary float-right" href={WWW_DIR_JAVASCRIPT + "genericbot/downloadbotgroup/" + this.props.group.get('id')}><i className="material-icons mr-0">cloud_download</i></a>
+                                <button className="btn btn-sm btn-danger float-right" onClick={this.deleteGroup.bind(this)}><i className="material-icons mr-0">delete</i></button>
+                            </div>
                         </div>
                     </div>
 
-                    <ul className="gbot-trglist">
-                        {mappedNodeGroupTriggers}
-                        <li><a className="btn btn-xs btn-default" onClick={this.addTrigger.bind(this)} ><i className="material-icons mr-0">add</i></a></li>
-                    </ul>
+                    <div className="row">
+                        <div className="col-12">
+                            <ul className="gbot-trglist">
+                                {mappedNodeGroupTriggers}
+                                <li><button className="btn btn-sm btn-secondary" onClick={this.addTrigger.bind(this)} ><i className="material-icons mr-0">add</i></button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
                     {triggerAction}
                 </div>
             </div>

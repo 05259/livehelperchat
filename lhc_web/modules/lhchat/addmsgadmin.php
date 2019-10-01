@@ -17,7 +17,7 @@ if (trim($form->msg) != '')
 						
 	    // Has access to read, chat
 	    //FIXME create permission to add message...
-	    if ( erLhcoreClassChat::hasAccessToRead($Chat) )
+	    if ($Chat instanceof erLhcoreClassModelChat && erLhcoreClassChat::hasAccessToRead($Chat) )
 	    {
 	        $currentUser = erLhcoreClassUser::instance();
 	
@@ -183,7 +183,7 @@ if (trim($form->msg) != '')
 	        
 	        echo erLhcoreClassChat::safe_json_encode(array('error' => 'false','r' => $returnBody)+ $customArgs);
 	        
-	        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.web_add_msg_admin', array('msg' => & $msg,'chat' => & $Chat));
+	        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.web_add_msg_admin', array('msg' => & $msg,'chat' => & $Chat, 'ou' => (isset($onlineuser) ? $onlineuser : null)));
 
 	    } else {
 	        throw new Exception('You cannot read this chat!');

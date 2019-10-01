@@ -171,6 +171,16 @@ class erLhcoreClassModelChat {
        $q->deleteFrom( 'lh_abstract_auto_responder_chat' )->where( $q->expr->eq( 'chat_id', $this->id ) );
        $stmt = $q->prepare();
        $stmt->execute();
+
+       // Repeat counter remove
+       $q->deleteFrom( 'lh_generic_bot_repeat_restrict' )->where( $q->expr->eq( 'chat_id', $this->id ) );
+       $stmt = $q->prepare();
+       $stmt->execute();
+
+       // Bot chat event remove
+       $q->deleteFrom( 'lh_generic_bot_chat_event' )->where( $q->expr->eq( 'chat_id', $this->id ) );
+       $stmt = $q->prepare();
+       $stmt->execute();
        
        erLhcoreClassModelChatFile::deleteByChatId($this->id);
    }
@@ -429,12 +439,17 @@ class erLhcoreClassModelChat {
        		break;
        		
        	case 'additional_data_array':
-       			$jsonData = json_decode($this->additional_data);
-       			if ($jsonData !== null) {
-       				$this->additional_data_array = $jsonData;
-       			} else {
-       				$this->additional_data_array = $this->additional_data;
-       			}
+
+                $this->additional_data_array = array();
+       	        if ($this->additional_data != ''){
+                    $jsonData = json_decode($this->additional_data,true);
+                    if ($jsonData !== null) {
+                        $this->additional_data_array = $jsonData;
+                    } else {
+                        $this->additional_data_array = array();
+                    }
+                }
+
        			return $this->additional_data_array;
        		break;
        		

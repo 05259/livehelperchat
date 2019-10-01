@@ -9,7 +9,45 @@
  * */
 class erLhcoreClassRestAPIHandler
 {
+    public static function executeRequest(erLhAbstractModelRestAPIKeyRemote $apiKey, $function, $params = array(), $uparams = array(), $method = 'GET', $manualAppend = '')
+    {
+        $ch = curl_init();
+        $headers = array('Accept' => 'application/json');
 
+        $uparamsArg = '';
+
+        if (!empty($uparams) && is_array($uparams)) {
+            $parts = array();
+            foreach ($uparams as $param => $value) {
+                $parts[] = '/('.$param .')/'.$value;
+            }
+            $uparamsArg = implode('', $parts);
+
+        }
+
+        $requestArgs = ($method == 'GET') ? '?' .http_build_query($params) : '';
+
+        if ($method == 'POST') {
+            curl_setopt($ch,CURLOPT_POST,1);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$params);
+        }
+
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, $apiKey->username . ':' . $apiKey->api_key);
+        curl_setopt($ch, CURLOPT_URL, $apiKey->host . $function . $manualAppend . $uparamsArg . $requestArgs);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_USERAGENT,'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT , 5);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        $content = curl_exec($ch);
+
+        return $content;
+    }
+    
     public static function getHeaders()
     {
         if (! function_exists('getallheaders')) {
@@ -123,6 +161,8 @@ class erLhcoreClassRestAPIHandler
                 if ($form->hasValidData($userAttribute)) {
                     if ($definitionField['type'] == 'filter') {
                         $filter['filter'][$definitionField['field']] = $form->$userAttribute;
+                    } else if ($definitionField['type'] == 'filtergt') {
+                        $filter['filtergt'][$definitionField['field']] = $form->$userAttribute;
                     } elseif ($definitionField['type'] == 'general') {
                         $filter[$definitionField['field']] = $form->$userAttribute;
                     }
@@ -135,6 +175,189 @@ class erLhcoreClassRestAPIHandler
         $filter['smart_select'] = true;
         
         return $filter;
+    }
+
+    public static function validateCampaignConversionList()
+    {
+        $validAttributes = array(
+            'int' => array(
+                'department_id' => array(
+                    'type' => 'filter',
+                    'field' => 'department_id',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'campaign_id' => array(
+                    'type' => 'filter',
+                    'field' => 'campaign_id',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'invitation_id' => array(
+                    'type' => 'filter',
+                    'field' => 'invitation_id',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'chat_id' => array(
+                    'type' => 'filter',
+                    'field' => 'chat_id',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'ctime' => array(
+                    'type' => 'filtergt',
+                    'field' => 'ctime',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'con_time' => array(
+                    'type' => 'filtergt',
+                    'field' => 'con_time',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'id' => array(
+                    'type' => 'filtergt',
+                    'field' => 'id',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'limit' => array(
+                    'type' => 'general',
+                    'field' => 'limit',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                ),
+                'offset' => array(
+                    'type' => 'general',
+                    'field' => 'offset',
+                    'validator' => new ezcInputFormDefinitionElement(ezcInputFormDefinitionElement::OPTIONAL, 'int', array(
+                        'min_range' => 1
+                    ))
+                )
+            )
+        );
+
+        $filter = self::formatFilter($validAttributes);
+
+        if (isset($_GET['invitation_status']) && $_GET['invitation_status'] != '') {
+            $statusLiteral = explode(',',$_GET['invitation_status']);
+            $statusMap = array(
+                'send' => erLhAbstractModelProactiveChatCampaignConversion::INV_SEND,
+                'shown' => erLhAbstractModelProactiveChatCampaignConversion::INV_SHOWN,
+                'seen' => erLhAbstractModelProactiveChatCampaignConversion::INV_SEEN,
+                'chat_started' => erLhAbstractModelProactiveChatCampaignConversion::INV_CHAT_STARTED
+            );
+
+            $statuses = array();
+            foreach ($statusLiteral as $item){
+                if (isset($statusMap[$item])){
+                    $statuses[] = $statusMap[$item];
+                }
+            }
+
+            if (!empty($statuses)) {
+                $filter['filterin']['invitation_status'] = $statuses;
+            }
+        }
+        // 0 - PC, 1 - mobile, 2 - tablet
+        if (isset($_GET['device_type']) && $_GET['device_type'] != '') {
+            $statusLiteral = explode(',',$_GET['device_type']);
+            $statusMap = array(
+                'pc' => 0,
+                'mobile' => 1,
+                'tablet' => 2,
+            );
+
+            $statuses = array();
+            foreach ($statusLiteral as $item){
+                if (isset($statusMap[$item])){
+                    $statuses[] = $statusMap[$item];
+                }
+            }
+
+            if (!empty($statuses)) {
+                $filter['filterin']['device_type'] = $statuses;
+            }
+        }
+
+        if (isset($_GET['invitation_type']) && $_GET['invitation_type'] != '') {
+            $statusLiteral = $_GET['invitation_type'];
+            $statusMap = array(
+                'operator' => 2,
+                'system' => 1,
+            );
+
+            if (isset($statusMap[$statusLiteral])){
+                $filter['filter']['invitation_type'] = $statusMap[$statusLiteral];
+            }
+        }
+
+        $filter['sort'] = 'id ' . ((isset($_GET['sort']) && $_GET['sort'] == 'desc') ? 'DESC' : 'ASC');
+
+        // Get chats list
+        $campaignsConversions = erLhAbstractModelProactiveChatCampaignConversion::getList($filter);
+
+        // Get chats count
+        $chatsCount = erLhAbstractModelProactiveChatCampaignConversion::getCount($filter);
+
+        if (isset($_GET['include_invitation']) && $_GET['include_invitation'] == 'true') {
+            erLhcoreClassChat::prefillObjects($campaignsConversions,array(
+                array(
+                    'invitation_id',
+                    'invitation',
+                    'erLhAbstractModelProactiveChatInvitation::getList'
+                ),
+            ));
+        }
+
+        if (isset($_GET['include_invitation']) && $_GET['include_invitation'] == 'true') {
+            erLhcoreClassChat::prefillObjects($campaignsConversions,array(
+                array(
+                    'invitation_id',
+                    'invitation',
+                    'erLhAbstractModelProactiveChatInvitation::getList'
+                ),
+            ));
+        }
+
+        if (isset($_GET['include_onlinevisitor']) && $_GET['include_onlinevisitor'] == 'true') {
+            erLhcoreClassChat::prefillObjects($campaignsConversions,array(
+                array(
+                    'vid_id',
+                    'vid',
+                    'erLhcoreClassModelChatOnlineUser::getList'
+                ),
+            ));
+        }
+
+        if (isset($_GET['include_department']) && $_GET['include_department'] == 'true') {
+            erLhcoreClassChat::prefillObjects($campaignsConversions,array(
+                array(
+                    'department_id',
+                    'department',
+                    'erLhcoreClassModelDepartament::getList'
+                ),
+            ));
+        }
+
+
+
+        // Chats list
+        return array(
+            'list' => array_values($campaignsConversions),
+            'list_count' => $chatsCount,
+            'error' => false
+        );
     }
 
     /**
@@ -189,6 +412,10 @@ class erLhcoreClassRestAPIHandler
         if (isset($_GET['filtergt']['id']) && is_numeric($_GET['filtergt']['id'])){
             $filter['filtergt']['id'] = (int)$_GET['filtergt']['id'];
         }
+
+        if (isset($_GET['delay']) && is_numeric($_GET['delay'])) {
+            $filter['filterlte']['time'] = time()-(int)$_GET['delay'];
+        }
         
         $limitation = self::getLimitation();
         
@@ -199,7 +426,7 @@ class erLhcoreClassRestAPIHandler
                 'list_count' => 0
             );
         }
-                
+
         if ($limitation !== true) {
             $filter['customfilter'][] = $limitation;
         }
@@ -286,16 +513,24 @@ class erLhcoreClassRestAPIHandler
         return !in_array($chat->dep_id, $dep);
     }
 
-    public static function hasAccessTo($module, $functions) 
+    public static function hasAccessTo($module, $functions, $returnLimitation = false)
     {
         $AccessArray = erLhcoreClassRole::accessArrayByUserID( self::$apiKey->user->id );
-              
+
         // Global rights
         if (isset($AccessArray['*']['*']) || isset($AccessArray[$module]['*']))
         {
-            return true;
+            if ($returnLimitation === false) {
+                return true;
+            } elseif (isset($AccessArray[$module]['*']) && !is_bool($AccessArray[$module]['*'])) {
+                return $AccessArray[$module]['*'];
+            } elseif ($AccessArray['*']['*'] && !is_bool($AccessArray['*']['*'])) {
+                return $AccessArray['*']['*'];
+            } else {
+                return true;
+            }
         }
-        
+
         // Provided rights have to be set
         if (is_array($functions))
         {
@@ -304,10 +539,15 @@ class erLhcoreClassRestAPIHandler
                 // Missing one of provided right
                 if (!isset($AccessArray[$module][$function])) return false;
             }
+
         } else {
-            if (!isset($AccessArray[$module][$functions])) return false;
+            if (!isset($AccessArray[$module][$functions])) {
+                return false;
+            } elseif (isset($AccessArray[$module][$functions]) && $returnLimitation === true && !is_bool($AccessArray[$module][$functions])) {
+                return $AccessArray[$module][$functions];
+            }
         }
-        
+
         return true;
     }
 
@@ -364,9 +604,8 @@ class erLhcoreClassRestAPIHandler
                 $hasKey    = is_string($key);
                 $isString  = is_string($value) || is_numeric($value);
                 $isArray   = is_array($value);
-                $count     = count($value);
-                $isIndexed = $isArray && $count > 1 && array_keys($value) === range(0, $count - 1);
-                $isKeyed   = $isArray && $count && !$isIndexed;
+                $isIndexed = $isArray && count($value) > 1 && array_keys($value) === range(0, count($value) - 1);
+                $isKeyed   = $isArray && count($value) && !$isIndexed;
                 switch (true) {
                     case $isString && $hasKey:
                                                 

@@ -2,6 +2,15 @@
 
 class erLhcoreClassModelChatOnlineUser
 {
+    use erLhcoreClassDBTrait;
+
+    public static $dbTable = 'lh_chat_online_user';
+
+    public static $dbTableId = 'id';
+
+    public static $dbSessionHandler = 'erLhcoreClassChat::getSession';
+
+    public static $dbSortOrder = 'DESC';
 
     public function getState()
     {
@@ -53,22 +62,8 @@ class erLhcoreClassModelChatOnlineUser
         );
     }
 
-    public function setState(array $properties)
-    {
-        foreach ($properties as $key => $val) {
-            $this->$key = $val;
-        }
-    }
-
-    public static function fetch($chat_id)
-    {
-        $chat = erLhcoreClassChat::getSession()->load('erLhcoreClassModelChatOnlineUser', (int)$chat_id);
-        return $chat;
-    }
-
     public function removeThis()
     {
-
         $q = ezcDbInstance::get()->createDeleteQuery();
 
         // Delete user footprint
@@ -90,6 +85,22 @@ class erLhcoreClassModelChatOnlineUser
     public function __get($var)
     {
         switch ($var) {
+
+            case 'nick':
+                $this->nick = 'V' . $this->id;
+                if (isset($this->online_attr_system_array['username']) && $this->online_attr_system_array['username'] != ''){
+                    $this->nick = $this->online_attr_system_array['username'];
+                    $this->has_nick = true;
+                } else if (isset($this->online_attr_array['lhc.nick']['value']) && $this->online_attr_array['lhc.nick']['value'] != '') {
+                    $this->nick = $this->online_attr_array['lhc.nick']['value'];
+                    $this->has_nick = true;
+                } elseif (isset($this->online_attr_array['username']) && $this->online_attr_array['username'] != ''){
+                    $this->nick = $this->online_attr_array['username'];
+                    $this->has_nick = true;
+                }
+                return $this->nick;
+                break;
+
             case 'last_visit_front':
                 return $this->last_visit_front = date(erLhcoreClassModule::$dateDateHourFormat, $this->last_visit);
                 break;
@@ -130,6 +141,32 @@ class erLhcoreClassModelChatOnlineUser
                     }
                 }
                 return $this->chat;
+                break;
+
+            case 'operator_message_front':
+                    $this->operator_message_front = $this->operator_message;
+                    $replaceArray = array();
+                    foreach ($this->chat_variables_array as $keyItem => $addItem) {
+                        $replaceArray['{lhc.var.' . $keyItem . '}'] = $addItem;
+                    }
+
+                    foreach ($this->online_attr_array as $keyItem => $addItem) {
+                        if (!is_string($addItem) || (is_string($addItem) && ($addItem != ''))) {
+                            if (isset($addItem['identifier'])) {
+                                $replaceArray['{lhc.add.' . $addItem['identifier'] . '}'] = $addItem['value'];
+                            } else if (isset($addItem['key'])) {
+                                $replaceArray['{lhc.add.' . $addItem['key'] . '}'] = $addItem['value'];
+                            }
+                        }
+                    }
+ 
+                    if (!empty($replaceArray)){
+                        $this->operator_message_front = str_replace(array_keys($replaceArray), array_values($replaceArray), $this->operator_message_front);
+                    }
+                    
+                    $this->operator_message_front =  preg_replace('/{lhc.add.(.*)}/','',$this->operator_message_front);
+
+                    return $this->operator_message_front;
                 break;
 
             case 'can_view_chat':
@@ -249,12 +286,22 @@ class erLhcoreClassModelChatOnlineUser
                 return $this->screenshot;
                 break;
 
+            case 'chat_variables_array':
             case 'online_attr_system_array':
-                $this->online_attr_system_array = array();
+                $this->{$var} = array();
                 if ($this->online_attr_system != '') {
-                    $this->online_attr_system_array = json_decode($this->online_attr_system, true);
+                    $this->{$var} = json_decode($this->online_attr_system, true);
                 }
-                return $this->online_attr_system_array;
+                return $this->{$var};
+                break;
+
+            case 'additional_data_array':
+            case 'online_attr_array':
+                $this->{$var} = array();
+                if ($this->online_attr != '') {
+                    $this->{$var} = json_decode($this->online_attr, true);
+                }
+                return $this->{$var};
                 break;
 
             case 'online_status':
@@ -284,63 +331,6 @@ class erLhcoreClassModelChatOnlineUser
             default:
                 break;
         }
-    }
-
-    public static function getCount($params = array())
-    {
-        return erLhcoreClassChat::getCount($params, "lh_chat_online_user");
-    }
-
-    public static function getList($paramsSearch = array(), $ignoreColumns = array())
-    {
-        $paramsDefault = array('limit' => 32, 'offset' => 0);
-
-        $params = array_merge($paramsDefault, $paramsSearch);
-
-        $session = erLhcoreClassChat::getSession();
-        $q = $session->createFindQuery('erLhcoreClassModelChatOnlineUser', $ignoreColumns);
-
-        $conditions = array();
-
-        if (isset($params['filter']) && count($params['filter']) > 0) {
-            foreach ($params['filter'] as $field => $fieldValue) {
-                $conditions[] = $q->expr->eq($field, $q->bindValue($fieldValue));
-            }
-        }
-
-        if (isset($params['filterin']) && count($params['filterin']) > 0) {
-            foreach ($params['filterin'] as $field => $fieldValue) {
-                $conditions[] = $q->expr->in($field, $fieldValue);
-            }
-        }
-
-        if (isset($params['filterlt']) && count($params['filterlt']) > 0) {
-            foreach ($params['filterlt'] as $field => $fieldValue) {
-                $conditions[] = $q->expr->lt($field, $q->bindValue($fieldValue));
-            }
-        }
-
-        if (isset($params['filtergt']) && count($params['filtergt']) > 0) {
-            foreach ($params['filtergt'] as $field => $fieldValue) {
-                $conditions[] = $q->expr->gt($field, $q->bindValue($fieldValue));
-            }
-        }
-
-        if (count($conditions) > 0) {
-            $q->where(
-                $conditions
-            );
-        }
-
-        $q->limit($params['limit'], $params['offset']);
-
-        if (!isset($params['sort']) || (isset($params['sort']) && $params['sort'] !== false)) {
-            $q->orderBy(isset($params['sort']) ? $params['sort'] : 'id DESC');
-        }
-
-        $objects = $session->find($q);
-
-        return $objects;
     }
 
     public static function executeRequest($url)
@@ -406,8 +396,8 @@ class erLhcoreClassModelChatOnlineUser
                     $reader = new GeoIp2\Database\Reader('var/external/geoip/GeoLite2-Country.mmdb');
                     $countryData = $reader->country($ip);
                     $normalizedObject = new stdClass();
-                    $normalizedObject->country_code = strtolower($countryData->raw['country']['iso_code']);
-                    $normalizedObject->country_name = $countryData->raw['country']['names']['en'];
+                    $normalizedObject->country_code = isset($countryData->raw['country']) ? strtolower($countryData->raw['country']['iso_code']) : '';
+                    $normalizedObject->country_name = isset($countryData->raw['country']) ? $countryData->raw['country']['names']['en'] : '';
                     $normalizedObject->city = '';
                     $normalizedObject->lat = '';
                     $normalizedObject->lon = '';
@@ -592,7 +582,12 @@ class erLhcoreClassModelChatOnlineUser
     {    
         return erLhAbstractModelProactiveChatInvitation::processProActiveInvitationDynamic($paramsHandle['online_user'], array('tag' => isset($paramsHandle['tag']) ? $paramsHandle['tag'] : ''));
     }
-    
+
+    public static function getInjectHTMLInvitation($paramsHandle = array())
+    {
+        return erLhAbstractModelProactiveChatInvitation::processInjectHTMLInvitation($paramsHandle['online_user'], array('tag' => isset($paramsHandle['tag']) ? $paramsHandle['tag'] : ''));
+    }
+
     public static function handleRequest($paramsHandle = array())
     {
         if (isset($_SERVER['HTTP_USER_AGENT']) && !self::isBot($_SERVER['HTTP_USER_AGENT'])) {
@@ -689,12 +684,77 @@ class erLhcoreClassModelChatOnlineUser
                 $item->tt_pages_count++;
                 $item->store_chat = true;
 
+                $onlineAttr = array();
+
                 if (isset($_GET['onattr']) && is_array($_GET['onattr']) && !(empty($_GET['onattr']))) {
-                    $item->online_attr = json_encode($_GET['onattr']);
+                    $onlineAttr = $_GET['onattr'];
                 }
 
                 if ($item->has_message_from_operator == true) {
                     $item->invitation_seen_count++;
+                }
+
+                if (isset($_GET['jsvar']) && is_array($_GET['jsvar']) && !(empty($_GET['jsvar']))) {
+                    foreach (erLhAbstractModelChatVariable::getList(array('customfilter' => array('dep_id = 0 OR dep_id = ' . (int)$item->dep_id))) as $jsVar) {
+                        if (isset($_GET['jsvar'][$jsVar->id]) && !empty($_GET['jsvar'][$jsVar->id])) {
+
+                            $val = $_GET['jsvar'][$jsVar->id];
+                            if ($jsVar->type == 0) {
+                                $val = (string)$val;
+                            } elseif ($jsVar->type == 1) {
+                                $val = (int)$val;
+                            } elseif ($jsVar->type == 2) {
+                                $val = (real)$val;
+                            }
+                            $onlineAttr[$jsVar->var_identifier] =  array('h' => false, 'identifier' => $jsVar->var_identifier, 'key' => $jsVar->var_name, 'value' => $val);
+                        }
+                    }
+                }
+
+                /*
+                 * Parse standard passed arguments
+                 * */
+                if (isset($_GET['name']) && is_array($_GET['name']) && ! empty ( $_GET['name'] )) {
+                    $valuesArray = array ();
+
+                    if (isset($_GET['value']) && is_array($_GET['value']) && ! empty ( $_GET['value'] )) {
+                       $valuesArray = $_GET['value'];
+                    }
+
+                    foreach ( $_GET['name'] as $key => $name_item ) {
+
+                        $valueStore = isset($valuesArray[$key]) ? trim($valuesArray[$key]) : '';
+
+                        if (isset($_GET['encattr'][$key]) && $_GET['encattr'][$key] == 't' && $valueStore != '') {
+                            try {
+                                $chat = new stdClass();
+                                $chat->dep_id = $item->dep_id;
+                                $valueStore = erLhcoreClassChatValidator::decryptAdditionalField($valueStore, $chat);
+                            } catch (Exception $e) {
+                                $valueStore = $e->getMessage();
+                            }
+                        }
+
+                        $onlineAttr[$name_item] = array (
+                            'key' => $name_item,
+                            'value' => $valueStore,
+                            'h' => (isset($_GET['type'][$key]) && $_GET['type'][$key] == 'hidden' ? true : false),
+                        );
+                    }
+                }
+
+                if (isset($_GET['prefill'])) {
+                    foreach ($_GET['prefill'] as $key => $value) {
+                        $onlineAttr[$key] = $value;
+                    }
+                }
+
+                if (isset($paramsHandle['tag']) && $paramsHandle['tag'] != '') {
+                    $onlineAttr['tag'] = array('h' => false, 'identifier' => 'tag', 'key' => 'Tags', 'value' => implode(',',array_unique(explode(',',$paramsHandle['tag']))));
+                }
+
+                if (!empty($onlineAttr)) {
+                    $item->online_attr = json_encode($onlineAttr);
                 }
 
                 if (isset($paramsHandle['tz']) && is_numeric($paramsHandle['tz']) && $item->visitor_tz == '') {
@@ -706,8 +766,14 @@ class erLhcoreClassModelChatOnlineUser
 
                 // Hide invitation message after n times if required
                 if ($item->has_message_from_operator == true && $item->invitation !== false && $item->invitation->hide_after_ntimes > 0 && $item->invitation_seen_count > $item->invitation->hide_after_ntimes) {
-                    $item->message_seen = 1;
-                    $item->message_seen_ts = time();
+                    if (isset($item->invitation->design_data_array['show_everytime']) && $item->invitation->design_data_array['show_everytime'] == true) {
+                        $item->operator_message = '';
+                        $item->message_seen = 0;
+                        $item->message_seen_ts = 0;
+                    } else {
+                        $item->message_seen = 1;
+                        $item->message_seen_ts = time();
+                    }
                 }
             }
 
@@ -829,9 +895,13 @@ class erLhcoreClassModelChatOnlineUser
     public $user_active = 0;
     public $conversion_id = 0;
 
+    public $has_nick = false;
+
     // 0 - do not reopen
     // 1 - reopen chat
     public $reopen_chat = 0;
+
+    public $inject_html = array();
 
     // Logical attributes
     public $store_chat = false;

@@ -205,8 +205,8 @@ class erLhcoreClassUserValidator {
 		    }
 		    
     		if ( $form->hasValidData( 'DefaultGroup' ) ) {
-    		    
-    		    if ($params['groups_can_edit'] == true) {
+
+    		    if ($params['groups_can_edit'] === true) {
     		        $userData->user_groups_id = $form->DefaultGroup;
 
     		        $groupsRequired = erLhcoreClassModelGroup::getList(array('filter' => array('required' => 1)));
@@ -220,10 +220,16 @@ class erLhcoreClassUserValidator {
     		        }
 
     		    } else {
+
+                    $groupsMustChecked = array_intersect($userData->user_groups_id,$params['groups_can_read']);
+
     		        $unknownGroups = array_diff($form->DefaultGroup, $params['groups_can_edit']);
-    		        
+
     		        if (empty($unknownGroups)) {
     		            $userData->user_groups_id = $form->DefaultGroup;
+                        foreach ($groupsMustChecked as $groupAdd) {
+                            $userData->user_groups_id[] = $groupAdd;
+                        }
 
     		            if (!empty($params['groups_can_edit'])) {
                             $groupsRequired = erLhcoreClassModelGroup::getList(array('filterin' => array('id' => $params['groups_can_edit']), 'filter' => array('required' => 1)));
@@ -375,7 +381,9 @@ class erLhcoreClassUserValidator {
 				$response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.edit.photo_resize_150', array('mime_type' => $file["data"]['mime_type'],'user' => $userData));
 			
 				if ($response === false) {
-					erLhcoreClassImageConverter::getInstance()->converter->transform( 'photow_150', $userData->file_path_server, $userData->file_path_server );
+				    if ($file["data"]['mime_type'] != 'image/svg+xml') {
+                        erLhcoreClassImageConverter::getInstance()->converter->transform( 'photow_150', $userData->file_path_server, $userData->file_path_server );
+                    }
 					chmod($userData->file_path_server, 0644);
 				}
 				

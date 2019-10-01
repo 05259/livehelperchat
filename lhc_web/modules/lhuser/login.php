@@ -70,7 +70,7 @@ if (isset($_POST['Login']))
 
         $valid = true;
 
-        if (is_array($recaptchaData) && $recaptchaData['enabled'] == 1) {
+        if (is_array($recaptchaData) && isset($recaptchaData['enabled']) && $recaptchaData['enabled'] == 1) {
            $params = [
                 'secret' 	=> $recaptchaData['secret_key'],
                 'response' 	=> $_POST['g-recaptcha']
@@ -131,6 +131,8 @@ if (isset($_POST['Login']))
                        exit;
                    }
                 }
+
+                erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.2fa_intercept', array('remember' => (isset($_POST['rememberMe']) && $_POST['rememberMe'] == 1),'is_external' => $isExternalRequest, 'current_user' => $currentUser));
 
                 if ($isExternalRequest) {
                     $tpl->set('msg', erTranslationClassLhTranslation::getInstance()->getTranslation('user/login','Logged in successfully'));

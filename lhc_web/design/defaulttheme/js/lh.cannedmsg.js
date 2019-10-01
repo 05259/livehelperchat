@@ -18,6 +18,9 @@ var LHCCannedMessageAutoSuggest = (function() {
 		// Store current request
 		this.currentRequest = null;
 
+		// Cache
+		this.cacheCanned = {};
+
         // General one
 		var _that = this;
 		
@@ -188,7 +191,7 @@ var LHCCannedMessageAutoSuggest = (function() {
 
             var element = $('#canned-hash-current-' + this.chat_id).parent().find('.canned-msg-preview');
 
-            if (element.size() == 0) {
+            if (element.length == 0) {
                 $('#canned-hash-current-' + this.chat_id).parent().append('<div class="canned-msg-preview"></div>');
                 element = $('#canned-hash-current-' + this.chat_id).parent().find('.canned-msg-preview');
 			}
@@ -252,13 +255,33 @@ var LHCCannedMessageAutoSuggest = (function() {
                     _that.currentRequest = null;
 				}
 
-				_that.currentRequest = $.getJSON(WWW_DIR_JAVASCRIPT + 'cannedmsg/showsuggester/' + _that.chat_id,{keyword : _that.currentKeword}, function(data) {
-					_that.textarea.parent().find('.canned-suggester').remove();
-					_that.textarea.before(data.result);
-					_that.initSuggester();
-				});
+                var cacheKeyword = false;
+				var cacheData = null;
 
-			}, 200);
+                if (_that.currentKeword.length < 3) {
+                    cacheKeyword = true;
+                    if (typeof _that.cacheCanned[_that.currentKeword] !== 'undefined') {
+                        cacheData = _that.cacheCanned[_that.currentKeword];
+					}
+                }
+
+                if (cacheData !== null)
+				{
+                    _that.textarea.parent().find('.canned-suggester').remove();
+                    _that.textarea.before(cacheData);
+                    _that.initSuggester();
+				} else {
+                    _that.currentRequest = $.getJSON(WWW_DIR_JAVASCRIPT + 'cannedmsg/showsuggester/' + _that.chat_id,{keyword : _that.currentKeword}, function(data) {
+                        _that.textarea.parent().find('.canned-suggester').remove();
+                        _that.textarea.before(data.result);
+                        _that.initSuggester();
+                        if (cacheKeyword == true) {
+                            _that.cacheCanned[_that.currentKeword] = data.result;
+						}
+                    });
+				}
+
+			}, 130);
 
 		} else {
 
@@ -324,7 +347,7 @@ var LHCCannedMessageAutoSuggest = (function() {
 		});
 		
 		// Show first canned message list if there is only one tag matched
-		if ($('#canned-hash-'+this.chat_id+' > li').size() == 1) {
+		if ($('#canned-hash-'+this.chat_id+' > li').length == 1) {
 			$('#canned-hash-'+this.chat_id+' > li > a').trigger( "click" );
 		} else {
             this.renderPreview(currentElement);

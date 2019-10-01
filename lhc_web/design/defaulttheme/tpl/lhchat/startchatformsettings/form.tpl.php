@@ -21,22 +21,29 @@ echo erLhcoreClassRenderHelper::renderCombobox( $params ); ?>
 <?php endif; ?>
 
 <div class="row">
-    <div class="col-xs-6">
+    <div class="col-6">
         <label><input type="checkbox" name="ForceLeaveMessage" value="on" <?php (isset($start_chat_data['force_leave_a_message']) && $start_chat_data['force_leave_a_message'] == true) ? print 'checked="checked"' : ''?> /> <?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Enable leave a message functionality automatically if there are no online operators');?></label><br/>
     </div>
-    <div class="col-xs-6">
+    <div class="col-6">
         <label><input type="checkbox" name="AutoStartChat" value="on" <?php (isset($start_chat_data['auto_start_chat']) && $start_chat_data['auto_start_chat'] == true) ? print 'checked="checked"' : ''?> /> <?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Auto start chat if there is no required fields. Usefull in case bot handles chat.');?></label>
+    </div>
+    <div class="col-6">
+        <label><input type="checkbox" name="MobilePopup" value="on" <?php (isset($start_chat_data['mobile_popup']) && $start_chat_data['mobile_popup'] == true) ? print 'checked="checked"' : ''?> /> <?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Open popup on mobile devices using mobile layout.');?></label>
+    </div>
+    <div class="col-6">
+        <label><input type="checkbox" name="DontAutoProcess" value="on" <?php (isset($start_chat_data['dont_auto_process']) && $start_chat_data['dont_auto_process'] == true) ? print 'checked="checked"' : ''?> /> <?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Do not process internal pages and use redirects.');?></label>
     </div>
 </div>
 
 <div role="tabpanel">
 	<!-- Nav tabs -->
 	<ul class="nav nav-tabs" role="tablist">
-		<li role="presentation" class="active"><a href="#panel1" aria-controls="panel1" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Online form settings');?></a></li>
-		<li role="presentation"><a href="#panel2" aria-controls="panel12" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Offline form settings');?></a></li>
-		<li role="presentation"><a href="#panel3" aria-controls="panel13" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Additional form settings');?></a></li>
-		<li role="presentation"><a href="#customfields" aria-controls="customfields" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Custom fields');?></a></li>
-		<li role="presentation"><a href="#urlfields" aria-controls="urlfields" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','URL Arguments');?></a></li>
+		<li role="presentation" class="active nav-item"><a class="nav-link active" href="#panel1" aria-controls="panel1" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Online form settings');?></a></li>
+		<li role="presentation" class="nav-item"><a href="#panel2" class="nav-link" aria-controls="panel12" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Offline form settings');?></a></li>
+		<li role="presentation" class="nav-item"><a href="#panel3" class="nav-link" aria-controls="panel13" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Additional form settings');?></a></li>
+		<li role="presentation" class="nav-item"><a href="#customfields" class="nav-link" aria-controls="customfields" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Custom fields');?></a></li>
+		<li role="presentation" class="nav-item"><a href="#urlfields" class="nav-link" aria-controls="urlfields" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','URL Arguments');?></a></li>
+		<li role="presentation" class="nav-item"><a href="#prechat" class="nav-link" aria-controls="prechat" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Pre chat');?></a></li>
 	</ul>
 
 	<!-- Tab panes -->
@@ -232,12 +239,6 @@ echo erLhcoreClassRenderHelper::renderCombobox( $params ); ?>
 				<label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Encryption key, min length 40');?></label> 
 				<input class="form-control" type="text" name="CustomFieldsEncryption" value="<?php (isset($start_chat_data['custom_fields_encryption'])) ? print htmlspecialchars($start_chat_data['custom_fields_encryption']) : ''?>" />
 			</div>
-
-			<div class="form-group">
-				<label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchatformsettings','Additional encryption key, min length 40');?></label> 
-				<input class="form-control" type="text" name="CustomFieldsEncryptionHMac" value="<?php (isset($start_chat_data['custom_fields_encryption_hmac'])) ? print htmlspecialchars($start_chat_data['custom_fields_encryption_hmac']) : ''?>" />
-			</div>
-
 		</div>
 		
 		<div role="tabpanel" class="tab-pane" id="customfields">
@@ -246,6 +247,10 @@ echo erLhcoreClassRenderHelper::renderCombobox( $params ); ?>
 
 		<div role="tabpanel" class="tab-pane" id="urlfields">
             <?php include(erLhcoreClassDesign::designtpl('lhchat/startchatformsettings/url_fields.tpl.php'));?>
+		</div>
+        
+		<div role="tabpanel" class="tab-pane" id="prechat">
+            <?php include(erLhcoreClassDesign::designtpl('lhchat/startchatformsettings/prechat.tpl.php'));?>
 		</div>
 
 	</div>

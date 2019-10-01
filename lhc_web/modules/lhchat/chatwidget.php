@@ -7,13 +7,16 @@ $embedMode = false;
 $fullHeight = (isset($Params['user_parameters_unordered']['fullheight']) && $Params['user_parameters_unordered']['fullheight'] == 'true') ? true : false;
 
 $modeAppend = '';
+$modeAppendDisplay = '';
 if ((string)$Params['user_parameters_unordered']['mode'] == 'embed') {
 	$embedMode = true;
 	$modeAppend = '/(mode)/embed';
+    $modeAppendDisplay = '/(embedmode)/embed';
 }
 
 if (is_array($Params['user_parameters_unordered']['ua']) && !empty($Params['user_parameters_unordered']['ua'])) {
     $modeAppend .= '/(ua)/'.implode('/', $Params['user_parameters_unordered']['ua']);
+    $modeAppendDisplay .= '/(ua)/'.implode('/', $Params['user_parameters_unordered']['ua']);
 }
 
 $theme = false;
@@ -77,17 +80,20 @@ if ((string)$Params['user_parameters_unordered']['hash'] != '' && (!isset($paidC
     		    	
     			// Reopen chat automatically if possible
     			if ( erLhcoreClassModelChatConfig::fetch('automatically_reopen_chat')->current_value == 1 && erLhcoreClassModelChatConfig::fetch('reopen_chat_enabled')->current_value == 1 && erLhcoreClassModelChatConfig::fetch('allow_reopen_closed')->current_value == 1 && erLhcoreClassChat::canReopen($chat) !== false ) {
-    				
     				$sound = is_numeric($Params['user_parameters_unordered']['sound']) ? '/(sound)/'.$Params['user_parameters_unordered']['sound'] : '';
-    				erLhcoreClassModule::redirect('chat/reopen','/' .$chatID . '/' . $hash . '/(mode)/widget' . $modeAppend . $modeAppendTheme . $sound );
+    				erLhcoreClassModule::redirect('chat/reopen','/' .$chatID . '/' . $hash . '/(mode)/widget' . $modeAppendDisplay . $modeAppendTheme . $sound );
     				exit;
     			}
     		} 
     		
     		if (isset($Params['user_parameters_unordered']['survey']) && is_numeric($Params['user_parameters_unordered']['survey'])){
     		    $modeAppendTheme .= '/(survey)/' . $Params['user_parameters_unordered']['survey'];
-    		}
-    		
+            } else if (isset($chat->department->bot_configuration_array['survey_id']) && $chat->department->bot_configuration_array['survey_id'] > 0) {
+                $modeAppendTheme .= '/(survey)/' . $chat->department->bot_configuration_array['survey_id'];
+            };
+
+            erLhcoreClassChatValidator::updateAdditionalVariables($chat);
+
     		// Rerun module
     		$Result = erLhcoreClassModule::reRun(erLhcoreClassDesign::baseurlRerun('chat/chatwidgetchat') . '/' . $chatID . '/' . $hash . $modeAppend . $modeAppendTheme . $sound);
     		return true;
@@ -219,11 +225,13 @@ $inputData->value_sizes = array();
 $inputData->value_types = array();
 $inputData->value_items_admin = array(); // These variables get's filled from start chat form settings
 $inputData->hattr = array();
+$inputData->jsvar = array();
 $inputData->encattr = array();
 $inputData->via_encrypted = array();
 $inputData->ua = $Params['user_parameters_unordered']['ua'];
 $inputData->priority = is_numeric($Params['user_parameters_unordered']['priority']) ? (int)$Params['user_parameters_unordered']['priority'] : false;
 $inputData->only_bot_online = isset($_POST['onlyBotOnline']) ? (int)$_POST['onlyBotOnline'] : 0;
+$inputData->tag = isset($_GET['tag']) ? (string)$_GET['tag'] : '';
 
 // If chat was started based on key up, we do not need to store a message
 //  because user is still typing it. We start chat in the background just.
@@ -241,8 +249,8 @@ if ((string)$Params['user_parameters_unordered']['vid'] != '') {
 
 // Reopen chat automatically if possible
 if ( erLhcoreClassModelChatConfig::fetch('automatically_reopen_chat')->current_value == 1 && erLhcoreClassModelChatConfig::fetch('reopen_chat_enabled')->current_value == 1 && ($reopenData = erLhcoreClassChat::canReopenDirectly(array('reopen_closed' => erLhcoreClassModelChatConfig::fetch('allow_reopen_closed')->current_value))) !== false ) {
-	$sound = is_numeric($Params['user_parameters_unordered']['sound']) ? '/(sound)/'.$Params['user_parameters_unordered']['sound'] : '';
-	erLhcoreClassModule::redirect('chat/reopen','/' . $reopenData['id'] . '/' . $reopenData['hash'] . '/(mode)/widget' . $modeAppend . $modeAppendTheme . $sound );
+    $sound = is_numeric($Params['user_parameters_unordered']['sound']) ? '/(sound)/'.$Params['user_parameters_unordered']['sound'] : '';
+    erLhcoreClassModule::redirect('chat/reopen','/' . $reopenData['id'] . '/' . $reopenData['hash'] . '/(mode)/widget' . $modeAppendDisplay . $modeAppendTheme . $sound );
 	exit;
 }
 
@@ -284,6 +292,7 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
    if (count($Errors) == 0 && !isset($_POST['switchLang']))
    {   	
    		$chat->setIP();
+        $chat->lsync = time();
    		erLhcoreClassModelChat::detectLocation($chat);
    		
    		$statusGeoAdjustment = erLhcoreClassChat::getAdjustment(erLhcoreClassModelChatConfig::fetch('geoadjustment_data')->data_value, $inputData->vid);
@@ -338,7 +347,7 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
 	       try {
     	       $db = ezcDbInstance::get();
     	       $db->beginTransaction();
-    	       
+
     	       // Store chat
     	       $chat->saveThis();
 
@@ -352,19 +361,34 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
     	                $userInstance->dep_id = $chat->dep_id;
     	                $userInstance->message_seen = 1;
     	                $userInstance->message_seen_ts = time();
+
+    	                if ($chat->nick != erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Visitor')) {
+    	                    $onlineAttr = $userInstance->online_attr_system_array;
+    	                    if (!isset($onlineAttr['username'])){
+                                $onlineAttr['username'] = $chat->nick;
+                                $userInstance->online_attr_system = json_encode($onlineAttr);
+                            }
+                        } elseif ($chat->nick == erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Visitor')){
+                            if ($userInstance->nick && $userInstance->has_nick) {
+                                $chat->nick = $userInstance->nick;
+                            }
+                        }
+
     	                $userInstance->saveThis();
     
     	                $chat->online_user_id = $userInstance->id;
     	                $chat->saveThis();
-    	                
+
     	                if ( erLhcoreClassModelChatConfig::fetch('track_footprint')->current_value == 1) {
-    	            		erLhcoreClassModelChatOnlineUserFootprint::assignChatToPageviews($userInstance);
+    	            		erLhcoreClassModelChatOnlineUserFootprint::assignChatToPageviews($userInstance, erLhcoreClassModelChatConfig::fetch('footprint_background')->current_value == 1);
     	            	}
     	            }
     	       }
     
     	       $messageInitial = false;
-    	       
+
+               $paramsExecution = array();
+               
     	       // Store message if required
     	       if (isset($startDataFields['message_visible_in_page_widget']) && $startDataFields['message_visible_in_page_widget'] == true) {
     	           if ( $inputData->question != '' && $inputData->key_up_started == false) {
@@ -375,8 +399,8 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
     	               $msg->user_id = 0;
     	               $msg->time = time();
     	               erLhcoreClassChat::getSession()->save($msg);
-    
-    	               $messageInitial = $msg;	     
+
+                       $paramsExecution['msg'] = $messageInitial = $msg;     
     	               	               
     	               $chat->unanswered_chat = 1;
     	               $chat->last_msg_id = $msg->id;
@@ -385,7 +409,7 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
     	       }
 
                // Set bot workflow if required
-               erLhcoreClassChatValidator::setBot($chat);
+               erLhcoreClassChatValidator::setBot($chat, $paramsExecution);
 
     	       // Auto responder does not make sense in this mode
     	       if ($inputData->key_up_started == false) {
@@ -464,6 +488,10 @@ if (isset($_POST['StartChat']) && $disabled_department === false)
 	          throw $e;
 	       }
 
+            if ((!isset($Params['user_parameters_unordered']['survey']) || !is_numeric($Params['user_parameters_unordered']['survey'])) && isset($chat->department->bot_configuration_array['survey_id']) && $chat->department->bot_configuration_array['survey_id'] > 0) {
+                $modeAppendTheme .= '/(survey)/' . $chat->department->bot_configuration_array['survey_id'];
+            };
+	       
            if ($Params['user_parameters_unordered']['ajaxmode'] == 'true') {
                header ( 'content-type: application/json; charset=utf-8' );
                echo json_encode(array('location' => erLhcoreClassDesign::baseurl('chat/chatwidgetchat') . '/' . $chat->id . '/' . $chat->hash . $modeAppend . $modeAppendTheme . '/(cstarted)/online_chat_started_cb'));
@@ -489,6 +517,11 @@ $tpl->set('start_data_fields',$startDataFields);
 
 $definition = array(
 		'name'  => new ezcInputFormDefinitionElement(
+				ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw',
+				null,
+				FILTER_REQUIRE_ARRAY
+		),
+		'jsvar'  => new ezcInputFormDefinitionElement(
 				ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw',
 				null,
 				FILTER_REQUIRE_ARRAY
@@ -597,6 +630,11 @@ if ( $form->hasValidData( 'via_encrypted' ) && !empty($form->via_encrypted))
     $inputData->via_encrypted = $form->via_encrypted;
 }
 
+if ( $form->hasValidData( 'jsvar' ) && !empty($form->jsvar))
+{
+    $inputData->jsvar = $form->jsvar;
+}
+
 // Fill back office values ir prefilled
 if ($form->hasValidData( 'value_items_admin' ))
 {
@@ -623,6 +661,10 @@ if (isset($_GET['r']))
 if (isset($_POST['r']))
 {
     $tpl->set('referer_site',$_POST['r']);
+}
+
+if (isset($Params['user_parameters_unordered']['survey']) && is_numeric($Params['user_parameters_unordered']['survey'])){
+    $modeAppendTheme .= '/(survey)/' . $Params['user_parameters_unordered']['survey'];
 }
 
 // Auto start chat

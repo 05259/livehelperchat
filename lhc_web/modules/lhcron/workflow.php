@@ -49,7 +49,7 @@ try {
         foreach (erLhcoreClassChat::getList(array('sort' => 'priority DESC, id ASC', 'limit' => 500, 'filterlt' => array('time' => (time() - $assignWorkflowTimeout)),'filter' => array('status' => erLhcoreClassModelChat::STATUS_PENDING_CHAT))) as $chat){
             $db->beginTransaction();
             $chat = erLhcoreClassModelChat::fetchAndLock($chat->id);
-            if ($chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT) {
+            if (is_object($chat) && $chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT) {
                 erLhcoreClassChatWorkflow::autoAssign($chat, $chat->department, array('cron_init' => true, 'auto_assign_timeout' => true));
                 erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.pending_process_workflow',array('chat' => & $chat));
             }
@@ -60,7 +60,7 @@ try {
     foreach (erLhcoreClassChat::getList(array('sort' => 'priority DESC, id ASC', 'limit' => 500, 'filter' => array('status' => erLhcoreClassModelChat::STATUS_PENDING_CHAT))) as $chat){
         $db->beginTransaction();
             $chat = erLhcoreClassModelChat::fetchAndLock($chat->id);
-            if ($chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT) {
+            if (is_object($chat) && $chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT) {
                 erLhcoreClassChatWorkflow::autoAssign($chat, $chat->department, array('cron_init' => true, 'auto_assign_timeout' => false));
                 erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.pending_process_workflow',array('chat' => & $chat));
             }
@@ -83,6 +83,12 @@ erLhcoreClassChatCleanup::onlineOperatorsCleanup(array('cronjob' => true));
 
 // Cleanup online operators sessions
 erLhcoreClassChatCleanup::departmentAvailabilityCleanup(array('cronjob' => true));
+
+// Update footprints table if required
+erLhcoreClassChatCleanup::updateFootprintBackground();
+
+// Cleanup Audit table if required
+erLhcoreClassChatCleanup::cleanupAuditLog();
 
 echo "Ended chat/workflow\n";
 

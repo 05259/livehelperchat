@@ -9,7 +9,7 @@ $Msg = erLhcoreClassChat::getSession()->load( 'erLhcoreClassModelCannedMsg', (in
  * */
 $userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
 if ($userDepartments !== true) {
-	if (!in_array($Msg->department_id, $userDepartments)) {
+	if (!in_array($Msg->department_id, $userDepartments) && $Msg->department_id != 0) {
 		erLhcoreClassModule::redirect('chat/cannedmsg');
 		exit;
 	}
@@ -22,6 +22,8 @@ if ( isset($_POST['Cancel_action']) ) {
 
 if (isset($_POST['Update_action']) || isset($_POST['Save_action'])  )
 {
+    $previousState = $Msg->getState();
+
    $Errors = erLhcoreClassAdminChatValidatorHelper::validateCannedMessage($Msg, $userDepartments);
    
    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.canned_msg_before_save',array('departments' => $userDepartments, 'errors' => & $Errors, 'msg' => & $Msg, 'scope' => 'global'));
@@ -31,6 +33,18 @@ if (isset($_POST['Update_action']) || isset($_POST['Save_action'])  )
         $Msg->saveThis();
         
         erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.canned_msg_after_save',array('msg' => & $Msg));
+
+        $currentState = $Msg->getState();
+
+        erLhcoreClassLog::logObjectChange(array(
+            'object' => $Msg,
+            'check_log' => true,
+            'msg' => array(
+                'prev' => $previousState,
+                'curr' => $currentState,
+                'user_id' => $currentUser->getUserID()
+            )
+        ));
         
         if (isset($_POST['Save_action'])) {
             erLhcoreClassModule::redirect('chat/cannedmsg');

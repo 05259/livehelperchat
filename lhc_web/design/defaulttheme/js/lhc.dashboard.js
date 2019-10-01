@@ -1,9 +1,9 @@
 $( document ).ready(function() {
-	$('#dashboard-body, #onlineusers, #map').popover({
+	$('#map').popover({
 		  trigger:'hover',
 		  html : true, 
-		  container: 'body',
 		  selector: '[data-toggle="popover"]',
+		  template : '<div class="popover" role="tooltip"><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
 		  content: function () {
 			 if ($(this).is('[data-popover-content]')) {
 				 return $('#'+$(this).attr('data-popover-content')+'-'+$(this).attr('data-chat-id')).html();
@@ -15,7 +15,7 @@ $( document ).ready(function() {
 			 if ($(this).is('[data-popover-title]')) {
 				 return $('#'+$(this).attr('data-popover-title')+'-'+$(this).attr('data-chat-id')).html();
 			 } else {
-				 return  $('#popover-title-'+$(this).attr('data-chat-id')).html();
+				 return $('#popover-title-'+$(this).attr('data-chat-id')).html();
 			 }
 		  }
 	});
@@ -31,7 +31,7 @@ $( document ).ready(function() {
     panelList.sortable({
         connectWith:".sortable-column-dashboard",
         opacity: 0.7,       
-        handle: ".panel-heading",         
+        handle: ".card-header",
         items: '> div',
         update: function() {
         	if (savingSettings == false)
@@ -43,7 +43,7 @@ $( document ).ready(function() {
 
         			var items = [];        			        			
            	                    
-                	$(panelListColumn).find('.panel-dashboard').each(function(index, elem) { 
+                	$(panelListColumn).find('.card-dashboard').each(function(index, elem) {
                 		items.push($(elem).attr('data-panel-id'));
                     });
             	

@@ -5,11 +5,9 @@ $db->beginTransaction();
 
 $chat = erLhcoreClassModelChat::fetch($Params['user_parameters']['chat_id']);
 
-if ( erLhcoreClassChat::hasAccessToRead($chat) )
+if ($chat instanceof erLhcoreClassModelChat && erLhcoreClassChat::hasAccessToRead($chat) )
 {
-    $userData = $currentUser->getUserData();
-
-    if (erLhcoreClassChat::hasAccessToWrite($chat)) {
+        $userData = $currentUser->getUserData();
 
         try {
 
@@ -25,7 +23,6 @@ if ( erLhcoreClassChat::hasAccessToRead($chat) )
         } catch (Exception $e) {
             echo $e->getMessage();
         }
-    }
 
 } else {
     echo json_encode(array('error' => true));

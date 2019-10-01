@@ -73,6 +73,11 @@
 </div>
 
 <div class="form-group">		
+<label><?php echo $fields['show_everytime']['trans'];?></label>
+<?php echo erLhcoreClassAbstract::renderInput('show_everytime', $fields['show_everytime'], $object)?>
+</div>
+
+<div class="form-group">
 <label><?php echo $fields['show_random_operator']['trans'];?></label>
 <?php echo erLhcoreClassAbstract::renderInput('show_random_operator', $fields['show_random_operator'], $object)?>
 </div>
@@ -104,11 +109,15 @@
 
 <div class="form-group">		
 <label><?php echo $fields['message']['trans'];?>*</label>
+<?php $bbcodeOptions = array('selector' => 'textarea[name=AbstractInput_message]'); ?>
+<?php include(erLhcoreClassDesign::designtpl('lhbbcode/toolbar.tpl.php')); ?>
 <?php echo erLhcoreClassAbstract::renderInput('message', $fields['message'], $object)?>
 </div>
 
 <div class="form-group">		
 <label><?php echo $fields['message_returning']['trans'];?></label>
+<?php $bbcodeOptions = array('selector' => 'textarea[name=AbstractInput_message_returning]'); ?>
+<?php include(erLhcoreClassDesign::designtpl('lhbbcode/toolbar.tpl.php')); ?>
 <?php echo erLhcoreClassAbstract::renderInput('message_returning', $fields['message_returning'], $object)?>
 </div>
 

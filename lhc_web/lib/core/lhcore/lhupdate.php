@@ -2,8 +2,8 @@
 
 class erLhcoreClassUpdate
 {
-	const DB_VERSION = 184;
-	const LHC_RELEASE = 309;
+	const DB_VERSION = 200;
+	const LHC_RELEASE = 325;
 
 	public static function doTablesUpdate($definition){
 		$updateInformation = self::getTablesStatus($definition);
@@ -213,7 +213,7 @@ class erLhcoreClassUpdate
     		    $removeIndexes = array_intersect($dataTableIndex['old'], $existingIndexes);
     		   
     		    foreach ($removeIndexes as $removeIndex) {
-    		        $tablesStatus[$table]['queries'][] = "ALTER TABLE `{$table}` DROP INDEX `{$removeIndex}`;";
+                    array_unshift($tablesStatus[$table]['queries'],"ALTER TABLE `{$table}` DROP INDEX `{$removeIndex}`;");
     		        $tablesStatus[$table]['error'] = true;
     		        $status[] = "{$removeIndex} legacy index was found";
     		    }

@@ -21,7 +21,7 @@
 <body<?php isset($Result['pagelayout_css_append']) ? print ' class="'.$Result['pagelayout_css_append'].'" ' : ''?>>
 
 <div id="widget-layout" class="row<?php (isset($Result['chat'])) ? print ' has-chat' : '';?>">
-	<div class="col-xs-12">
+	<div class="col-12">
         <?php include(erLhcoreClassDesign::designtpl('pagelayouts/parts/widget/before_widget_content.tpl.php'));?>
             <div id="widget-content-body"><?php echo $Result['content']; ?></div>
         <?php include(erLhcoreClassDesign::designtpl('pagelayouts/parts/widget/after_widget_content.tpl.php'));?>
@@ -33,6 +33,7 @@
 <script>
 var wasFocused = false;
 lhinst.isWidgetMode = true;
+
 $('input[type="text"]').first().click(function(){if (wasFocused == false){wasFocused=true;$(this).select().focus();}});
 $('textarea').first().click(function(){if (wasFocused == false){wasFocused=true;$(this).select();}});
 if (!!window.postMessage) {
@@ -50,6 +51,7 @@ if (!!window.postMessage) {
                 };
             };
         },200);
+
     <?php endif; ?>
 	<?php if (isset($Result['chat']) && is_numeric($Result['chat']->id)) : ?>
 	parent.postMessage("lhc_ch:hash:<?php echo $Result['chat']->id,'_',$Result['chat']->hash?>", '*');
@@ -62,6 +64,22 @@ if (!!window.postMessage) {
 	foreach ($Result['parent_messages'] as $msgPArent) : ?>
 	parent.postMessage("<?php echo $msgPArent?>", '*');
 	<?php endforeach;endif;?>
+    $(window).on('load',function() {
+        <?php if (!isset($Result['fullheight']) || (isset($Result['fullheight']) && !$Result['fullheight'])) : ?>
+        var currentHeight = heightElement.height();
+        if (heightContent != currentHeight){
+            heightContent = currentHeight;
+            try {
+                parent.postMessage('<?php echo $Result['dynamic_height_message']?>:'+(parseInt(heightContent)+<?php (isset($Result['dynamic_height_append'])) ? print $Result['dynamic_height_append'] : print 15?>), '*');
+            } catch(e) {
+
+            };
+        };
+        <?php endif; ?>
+        setTimeout(function () {
+            parent.postMessage("lhc_widget_loaded", '*');
+        },300);
+    });
 };
 </script>
 <?php endif;?>

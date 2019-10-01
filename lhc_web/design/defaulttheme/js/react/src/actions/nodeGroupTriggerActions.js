@@ -108,6 +108,17 @@ export function addTrigger(obj) {
         }
 }
 
+export function loadUseCases(obj) {
+    return function(dispatch) {
+        axios.get(WWW_DIR_JAVASCRIPT + "genericbot/loadusecases/" + obj.get('id'))
+        .then((response) => {
+            dispatch({type: "LOAD_USE_CASES_TRIGGER_FULFILLED", payload: response.data})
+        }).catch((err) => {
+            dispatch({type: "LOAD_USE_CASES_TRIGGER_FULFILLED", payload: err})
+        })
+    }
+}
+
 export function addTriggerEvent(obj) {
     return function(dispatch) {
         dispatch({type: "ADD_TRIGGER_EVENT", payload : obj});
@@ -208,6 +219,19 @@ export function setDefaultUnknownTrigger(obj) {
                 dispatch({type: "SET_DEFAULT_UNKNOWN_FULFILLED", payload: response.data})
         }).catch((err) => {
                 dispatch({type: "SET_DEFAULT_UNKNOWN_REJECTED", payload: err})
+        })
+    }
+}
+
+export function setDefaultAlwaysTrigger(obj) {
+    return function(dispatch) {
+        dispatch({type: "SET_DEFAULT_ALWAYS_TRIGGER", payload : obj});
+
+        axios.post(WWW_DIR_JAVASCRIPT + "genericbot/setdefaultalwaystrigger/" + obj.get('id') + '/' +  obj.get('default_always'))
+                .then((response) => {
+                dispatch({type: "SET_DEFAULT_ALWAYS_FULFILLED", payload: response.data})
+        }).catch((err) => {
+                dispatch({type: "SET_DEFAULT_ALWAYS_REJECTED", payload: err})
         })
     }
 }

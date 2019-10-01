@@ -50,7 +50,8 @@ class erLhAbstractModelProactiveChatInvitation {
 			'bot_offline' => $this->bot_offline,
 			'disabled' => $this->disabled,
 			'campaign_id' => $this->campaign_id,
-			'design_data' => $this->design_data
+			'design_data' => $this->design_data,
+			'inject_only_html' => $this->inject_only_html
 		);
 			
 		return $stateArray;
@@ -71,7 +72,7 @@ class erLhAbstractModelProactiveChatInvitation {
 		$departmentParams = array();
 		$userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
 		if ($userDepartments !== true) {
-			if (!in_array($this->dep_id, $userDepartments)) {
+			if (!in_array($this->dep_id, $userDepartments) && $this->dep_id != 0) {
 				return false;
 			}
 		}
@@ -84,6 +85,7 @@ class erLhAbstractModelProactiveChatInvitation {
 		$userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
 		if ($userDepartments !== true){
 			$departmentParams['filterin']['dep_id'] = $userDepartments;
+            $departmentParams['filterin']['dep_id'][] = 0;
 		}
 		
 		return $departmentParams;
@@ -225,14 +227,44 @@ class erLhAbstractModelProactiveChatInvitation {
 		
 		return '';
 	}
-	
+
+	public static function processInjectHTMLInvitation(erLhcoreClassModelChatOnlineUser & $item, $params = array())
+    {
+        $referrer = self::getHost($item->referrer);
+
+        $session = erLhcoreClassAbstract::getSession();
+
+        $q = $session->createFindQuery( 'erLhAbstractModelProactiveChatInvitation' );
+
+        if (isset($params['tag']) && $params['tag'] != '') {
+            $appendTag = 'AND ('.$q->expr->eq( 'tag', $q->bindValue( $params['tag'] ) ).' OR tag = \'\')';
+        } else {
+            $appendTag = 'AND (tag = \'\')';
+        }
+
+        $q->where( $q->expr->lte( 'time_on_site', $q->bindValue( $item->time_on_site ) ).' AND '.$q->expr->lte( 'pageviews', $q->bindValue( $item->pages_count ) ).'
+				AND ('.$q->expr->eq( 'siteaccess', $q->bindValue( erLhcoreClassSystem::instance()->SiteAccess ) ).' OR siteaccess = \'\')
+				AND ('.$q->expr->eq( 'identifier', $q->bindValue( $item->identifier ) ).' OR identifier = \'\')
+				' . $appendTag . '
+				AND ('.$q->expr->eq( 'dep_id', $q->bindValue( $item->dep_id ) ).' OR dep_id = 0)
+	            AND `inject_only_html` = 1
+	            AND `disabled` = 0
+				AND ('.$q->expr->like( $session->database->quote(trim($referrer)), 'concat(referrer,\'%\')' ).' OR referrer = \'\')'
+        )
+        ->orderBy('position ASC')
+        ->limit( 10 );
+
+        $messagesToUser = $session->find( $q );
+
+        return $messagesToUser;
+    }
+
 	public static function processProActiveInvitationDynamic(erLhcoreClassModelChatOnlineUser & $item, $params = array())
 	{
 	    $referrer = self::getHost($item->referrer);
 	    
 	    $session = erLhcoreClassAbstract::getSession();
-	    $appendTag = '';
-	    
+
 	    $q = $session->createFindQuery( 'erLhAbstractModelProactiveChatInvitation' );
 	    
 	    if (isset($params['tag']) && $params['tag'] != '') {
@@ -246,6 +278,7 @@ class erLhAbstractModelProactiveChatInvitation {
 				AND ('.$q->expr->eq( 'identifier', $q->bindValue( $item->identifier ) ).' OR identifier = \'\')
 				' . $appendTag . '
 				AND ('.$q->expr->eq( 'dep_id', $q->bindValue( $item->dep_id ) ).' OR dep_id = 0)
+	            AND `inject_only_html` = 0
 	            AND `dynamic_invitation` = 1
 	            AND `disabled` = 0
 				AND ('.$q->expr->like( $session->database->quote(trim($referrer)), 'concat(referrer,\'%\')' ).' OR referrer = \'\')'
@@ -278,7 +311,7 @@ class erLhAbstractModelProactiveChatInvitation {
 
 	    $item->operator_user_proactive = $message->operator_name;
 	    $item->invitation_id = $message->id;
-	    $item->invitation_seen_count = 0;
+	    $item->invitation_seen_count = 1;
 	    $item->requires_email = $message->requires_email;
 	    $item->requires_username = $message->requires_username;
 	    $item->requires_phone = $message->requires_phone;
@@ -304,8 +337,7 @@ class erLhAbstractModelProactiveChatInvitation {
 		$referrer = self::getHost($item->referrer);
 
 		$session = erLhcoreClassAbstract::getSession();			
-		$appendTag = '';
-		
+
 		$q = $session->createFindQuery( 'erLhAbstractModelProactiveChatInvitation' );
 		
 		if (isset($params['tag']) && $params['tag'] != '') {
@@ -325,6 +357,7 @@ class erLhAbstractModelProactiveChatInvitation {
 				' . $appendTag . '
 		        AND `dynamic_invitation` = 0
 		        AND `disabled` = 0
+		        AND `inject_only_html` = 0
 		        ' . $appendInvitationsId . '
 				AND ('.$q->expr->eq( 'dep_id', $q->bindValue( $item->dep_id ) ).' OR dep_id = 0)
 				AND ('.$q->expr->like( $session->database->quote(trim($referrer)), 'concat(referrer,\'%\')' ).' OR referrer = \'\')'
@@ -365,7 +398,7 @@ class erLhAbstractModelProactiveChatInvitation {
 
                 $item->operator_user_proactive = $message->operator_name;
                 $item->invitation_id = $message->id;
-                $item->invitation_seen_count = 0;
+                $item->invitation_seen_count = 1;
                 $item->requires_email = $message->requires_email;
                 $item->requires_username = $message->requires_username;
                 $item->requires_phone = $message->requires_phone;
@@ -596,6 +629,7 @@ class erLhAbstractModelProactiveChatInvitation {
 	public $disabled = 0;
 	public $campaign_id = 0;
 	public $design_data = '';
+	public $inject_only_html = 0;
 
 	public $next_reschedule = 0;
 	public $hide_add = false;

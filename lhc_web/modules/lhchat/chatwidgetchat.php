@@ -29,6 +29,7 @@ if ($Params['user_parameters_unordered']['sound'] !== null && is_numeric($Params
 
 if ($Params['user_parameters_unordered']['cstarted'] !== null && $Params['user_parameters_unordered']['cstarted'] != '') {
 	$Result['parent_messages'][] = 'lh_callback:' . (string)strip_tags($Params['user_parameters_unordered']['cstarted']);
+    $tpl->set('chat_started_now',true);
 }
 
 try {
@@ -49,13 +50,18 @@ try {
 
     if ($chat->hash == $Params['user_parameters']['hash'])
     {
+        $survey = is_numeric($Params['user_parameters_unordered']['survey']) ? (int)$Params['user_parameters_unordered']['survey'] : false;
         $tpl->set('chat_id',$Params['user_parameters']['chat_id']);
         $tpl->set('hash',$Params['user_parameters']['hash']);
         $tpl->set('chat',$chat);
         $tpl->set('chat_widget_mode',true);
         $tpl->set('chat_embed_mode',$embedMode);
-        $tpl->set('survey',is_numeric($Params['user_parameters_unordered']['survey']) ? (int)$Params['user_parameters_unordered']['survey'] : false);
-                
+        $tpl->set('survey',$survey);
+
+        if ($survey > 0) {
+            $Result['parent_messages'][] = 'lhc_chat_survey:' . $survey;
+        }
+
         $Result['chat'] = $chat;
 
         // If survey send parent message instantly
@@ -91,6 +97,10 @@ try {
                 $onlineuser->saveThis();
             }
 
+            $chat->unread_op_messages_informed = 0;
+            $chat->has_unread_op_messages = 0;
+            $chat->unanswered_chat = 0;
+
             $chat->user_status = erLhcoreClassModelChat::USER_STATUS_JOINED_CHAT;
 
             $nick = isset($_GET['prefill']['username']) ? trim($_GET['prefill']['username']) : '';
@@ -111,10 +121,10 @@ try {
             erLhcoreClassChat::getSession()->update($chat);
         }        
 
-        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.chatwidgetchat',array('result' => & $Result , 'tpl' => & $tpl, 'params' => & $Params, 'chat' => & $chat));
-        
         $db->commit();
-        
+
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.chatwidgetchat',array('result' => & $Result , 'tpl' => & $tpl, 'params' => & $Params, 'chat' => & $chat));
+
     } else {
         $tpl->setFile( 'lhchat/errors/chatnotexists.tpl.php');
     }

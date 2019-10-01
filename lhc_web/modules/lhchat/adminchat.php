@@ -7,19 +7,23 @@ $db->beginTransaction();
 
 $chat = erLhcoreClassModelChat::fetchAndLock($Params['user_parameters']['chat_id']);
 
-if ( erLhcoreClassChat::hasAccessToRead($chat) )
+if ($chat instanceof erLhcoreClassModelChat && erLhcoreClassChat::hasAccessToRead($chat) )
 {
 	$userData = $currentUser->getUserData();
 
 	if ($userData->invisible_mode == 0 && erLhcoreClassChat::hasAccessToWrite($chat)) {
 	    try {
 
+            if ($chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT && $chat->user_id != $userData->id && !$currentUser->hasAccessTo('lhchat','open_all')) {
+                throw new Exception('You do not have permission to open all pending chats.');
+            }
+
 	        $db->beginTransaction();
 	        
     		$operatorAccepted = false;
     		$chatDataChanged = false;
     		
-    	    if ($chat->user_id == 0 && $chat->status != erLhcoreClassModelChat::STATUS_BOT_CHAT) {
+    	    if ($chat->user_id == 0 && $chat->status != erLhcoreClassModelChat::STATUS_BOT_CHAT && $chat->status != erLhcoreClassModelChat::STATUS_CLOSED_CHAT) {
     	        $currentUser = erLhcoreClassUser::instance();
     	        $chat->user_id = $currentUser->getUserID();	     
     	        $chatDataChanged = true;
@@ -110,7 +114,14 @@ if ( erLhcoreClassChat::hasAccessToRead($chat) )
     	        	    
 	    } catch (Exception $e) {
 	        $db->rollback();
-	        echo $e->getMessage();
+
+            $tpl->setFile( 'lhchat/errors/adminchatnopermission.tpl.php');
+            $tpl->set('show_close_button',true);
+            $tpl->set('auto_close_dialog',true);
+            $tpl->set('chat_id',(int)$Params['user_parameters']['chat_id']);
+            $tpl->set('chat',$chat);
+            echo $tpl->fetch();
+            exit;
 	    }
 	} else {
 	    $tpl->set('canEditChat',erLhcoreClassChat::hasAccessToWrite($chat));

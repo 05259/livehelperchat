@@ -1,3 +1,142 @@
+3.25v
+
+1. Embeded live help widget also will track referrer page.
+2. Toolbar above messages area.
+3. Survey stars will be shown as stars.
+4. Option to use redirect instead of internal load during start chat. This will avoid refreshing page and starting new chat each time. Can be set in start chat form settings.
+5. Avoid invalid character shown if quates is used in translation for operator typing text.
+6. Popup opening in widget will automatically load mobile layout. Possible to set this in start chat form settings.
+7. Theme was not passed in auto start chat behaviour.
+8. Automatic transfer between departments was not handled in auto start environment.
+9. Option to change placeholder text in widget from themes.
+10. Improve multiselect dropdown behaviour. Selected items will be shown at top.
+11. Changed penging save message design to match chat style.
+12. Toolbar for operator admin.
+13. Once you set visitor nick it will be remembered for next chat sessions also.
+14. Removed autofocus in widgets.
+15. Hungarian language.
+16. Autoresponder multi-language support fixes. Was not saving correctly checked languages.
+17. New bot trigger type, execute always. This will allow specific trigger to be executed at any moment on bot chat conversation. Usefull to have it for visitor quickly switch to human.
+It supports two "Chat start behaviour"
+"Instant execution (Executes and continues workflow)" - this will execute trigger always and continue normal workflow.
+"Instant execution and block (executes and blocks further triggers execution)" - this will execute trigger and will not continue normal workflow.
+You can use second one to transfer chat to operator. This type of trigger has to have event defined.
+
+
+execute doc/update_db/update_200.sql for update
+
+3.24v
+
+1. You can preload now widgets whcih will eliminate loading delay of widgets. (System configuration -> Chat Configuration -> Misc -> Preload widget. It will avoid loading delay after clicking widget)
+
+execute doc/update_db/update_199.sql for update
+
+3.23v
+
+1. Proactive invitations now support Injecting HTML directly in website. Usefull if you want to show let say some custom modal window then mouse leaves a page.
+2. Canned messages now supports HTML Injection also. So you can send like HTML body to website.
+
+execute doc/update_db/update_198.sql for update
+
+3.22v
+
+1. New element in bot to restrict execute specific trigger defined number of times.
+
+execute doc/update_db/update_197.sql for update
+
+3.21v
+
+1. Now in bot configuration you can select what bot logic it should include. So one bot can combine multiple bot's logic.
+2. Option to have background worker for footprint updates. Usefull if footprint table is huge.
+3. Rest api chat's fetching methods has delay attribute which can be used. To fetch chats only older than x seconds.
+4. Bot now have new element which can search on chat start event. Usefull conbining various chat start logic.
+5. Sort in bot fixed if two elements one by another is same type.
+
+execute doc/update_db/update_196.sql for update
+
+3.20v
+
+1. Bot translations now can have separate images. So bot identity can be fully overridden now.
+
+execute doc/update_db/update_195.sql for update
+
+3.19v
+
+1. Bot now can have translations. Usefull if you want have one bot, but a little bit different texts by department.
+2. Copy messages now can include or exclude system messages.
+3. Mobile invitations. On mobile devices icon will be shown that there is unread messages.
+
+execute doc/update_db/update_194.sql for update
+
+3.18v
+
+1. Option in file upload configurator to setup meta tag clean up. Upon files upload from operators meta tag information for images can be removed.
+2. Updated messages style so that images won't have bubble background if message is only smile it also won't have bubble background.
+3. Additional chat columns now support object attributes. Additional can be turned of separately for chat and online visitors.
+
+execute doc/update_db/update_193.sql for update
+
+3.17v
+
+1. Now in options you can set should be cookie set only for domain where javascript is embeded or also subdomains. Default behaviour does not change. This can be controlled also from js embed code directly also.
+2. Updated PHPMailer
+
+execute doc/update_db/update_192.sql for update
+
+3.16v
+
+1. Operators now will have ability to have their own personal themes. To operators role has to be assigned (Themes) "lhtheme" (Allow operators have their own personal back office theme)"personaltheme"
+2. Various other changes related to bootstrap 4 migration.
+
+execute doc/update_db/update_191.sql for update
+
+3.15v
+
+1. Audit log functionality.
+2. Bootstrap 4.1.2, this is quite still early release. So if notice any design issues, let me know.
+3. Canned messages now have toolbar for easier images insert.
+4. New messages styles
+5. Tooltip removed from dashboard items. You should click (i) icon to preview chat information.
+
+execute doc/update_db/update_190.sql for update
+
+3.14v
+
+1. Various bot improvements. More flexible rules for triggers matching. Termination of bot workflow in the middle of sequence.
+Bot conditions check.
+
+execute doc/update_db/update_189.sql for update
+
+3.13v
+
+1. Various bot improvements. Intent detection by matching rules. Possibility to plug in various AI engines in the future.
+
+execute doc/update_db/update_188.sql for update
+
+3.12v
+
+1. Events will store how many times it was executed so extension can forbid executing it second time.
+
+execute doc/update_db/update_187.sql for update
+
+3.11v
+
+1. Option to have custom columns in dashboard chat lists based on additional chat data.
+additional_data.<key || identifier>
+chat_variable.<key || identifier>
+2. Custom priority based on additional chat data.
+
+execute doc/update_db/update_186.sql for update
+
+3.10v
+
+1. Remote API Keys support, this feature can be used by external API
+2. Custom arguments based on javascript variables existing in embedded page. No need to generate custom Live Helper Chat code. You just define what variable should check LHC
+3. Avoid PHP Sessions concurrent conditions if Redis is used as PHP Sessions handler.
+4. Various bot improvements. New Datatype
+
+execute doc/update_db/update_185.sql for update
+
 3.09v
 
 1. Password requirements configuration options

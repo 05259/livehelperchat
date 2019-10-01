@@ -17,7 +17,43 @@ $ViewList['initbot'] = array(
     'functions' => array( 'use' )
 );
 
+$ViewList['help'] = array(
+    'params' => array('context'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
 $ViewList['addpayload'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['loadusecases'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['downloadbot'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['downloadbotgroup'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['import'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['botimportgroup'] = array(
     'params' => array('id'),
     'uparams' => array(),
     'functions' => array( 'use' )
@@ -53,8 +89,62 @@ $ViewList['list'] = array(
     'functions' => array( 'use' )
 );
 
+$ViewList['listexceptions'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['listtranslations'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['listtranslationsitems'] = array(
+    'params' => array(),
+    'uparams' => array('group_id'),
+    'functions' => array( 'use' )
+);
+
 $ViewList['new'] = array(
     'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['newexception'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['newtrgroup'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['newtritem'] = array(
+    'params' => array(),
+    'uparams' => array('group_id'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['edittrgroup'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['edittritem'] = array(
+    'params' => array('id'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['editexception'] = array(
+    'params' => array('id'),
     'uparams' => array(),
     'functions' => array( 'use' )
 );
@@ -66,6 +156,24 @@ $ViewList['edit'] = array(
 );
 
 $ViewList['delete'] = array(
+    'params' => array('id'),
+    'uparams' => array('csfr'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['deleteexception'] = array(
+    'params' => array('id'),
+    'uparams' => array('csfr'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['deletetritem'] = array(
+    'params' => array('id'),
+    'uparams' => array('csfr'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['deletetrgroup'] = array(
     'params' => array('id'),
     'uparams' => array('csfr'),
     'functions' => array( 'use' )
@@ -144,6 +252,12 @@ $ViewList['setdefaulttrigger'] = array(
 );
 
 $ViewList['setdefaultunknowntrigger'] = array(
+    'params' => array('id','default'),
+    'uparams' => array(),
+    'functions' => array( 'use' )
+);
+
+$ViewList['setdefaultalwaystrigger'] = array(
     'params' => array('id','default'),
     'uparams' => array(),
     'functions' => array( 'use' )

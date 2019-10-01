@@ -14,7 +14,7 @@ class NodeTriggerActionButtons extends Component {
         this.onDeleteField = this.onDeleteField.bind(this);
         this.onMoveUpField = this.onMoveUpField.bind(this);
         this.onMoveDownField = this.onMoveDownField.bind(this);
-         this.onChangeMainAttr = this.onChangeMainAttr.bind(this);
+        this.onChangeMainAttr = this.onChangeMainAttr.bind(this);
     }
 
     changeType(e) {
@@ -62,18 +62,29 @@ class NodeTriggerActionButtons extends Component {
         return (
             <div>
                 <div className="row">
-                    <div className="col-xs-11">
+                    <div className="col-2">
+                        <div className="btn-group float-left" role="group" aria-label="Trigger actions">
+                            <button disabled="disabled" className="btn btn-sm btn-info">{this.props.id + 1}</button>
+                            {this.props.isFirst == false && <button className="btn btn-secondary btn-sm" onClick={(e) => this.props.upField(this.props.id)}><i className="material-icons mr-0">keyboard_arrow_up</i></button>}
+                            {this.props.isLast == false && <button className="btn btn-secondary btn-sm" onClick={(e) => this.props.downField(this.props.id)}><i className="material-icons mr-0">keyboard_arrow_down</i></button>}
+                        </div>
+                    </div>
+                    <div className="col-9">
                         <NodeTriggerActionType onChange={this.changeType} type={this.props.action.get('type')} />
                     </div>
-                    <div className="col-xs-1">
-                        <button onClick={this.removeAction} type="button" className="btn btn-danger btn-sm pull-right">
+                    <div className="col-1">
+                        <button onClick={this.removeAction} type="button" className="btn btn-danger btn-sm float-right">
                             <i className="material-icons mr-0">delete</i>
                         </button>
                     </div>
                 </div>
 
+                <div>
+                    <label><input type="checkbox" onChange={(e) => this.onChangeMainAttr('hide_text_area',e.target.checked)} defaultChecked={this.props.action.getIn(['content','buttons_options','hide_text_area'])} /> Hide text area on response.</label> <i className="material-icons" title="Textarea to enter user message will be disabled. Make sure you include buttons for user to click.">info</i>
+                </div>
+
                 <div className="row">
-                    <div className="col-xs-12">
+                    <div className="col-12">
                         <div className="form-group">
                             <label>Default message</label>
                             <input type="text" className="form-control" onChange={(e) => this.onChangeMainAttr('message',e.target.value)} defaultValue={this.props.action.getIn(['content','buttons_options','message'])} />
@@ -86,8 +97,8 @@ class NodeTriggerActionButtons extends Component {
                     {button_list}
                 </div>
 
-                <a className="btn btn-info btn-sm" onClick={this.addField.bind(this)}>Add button</a>
-                <hr/>
+                <button className="btn btn-info btn-sm" onClick={this.addField.bind(this)}>Add button</button>
+                <hr className="hr-big" />
             </div>
         );
     }

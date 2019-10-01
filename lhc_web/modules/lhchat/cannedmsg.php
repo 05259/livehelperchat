@@ -11,6 +11,7 @@ $departmentParams = array();
 $userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
 if ($userDepartments !== true){
 	$departmentParams['filterin']['department_id'] = $userDepartments;
+    $departmentParams['filterin']['department_id'][] = 0;
 }
 
 if (is_numeric($Params['user_parameters_unordered']['id']) && $Params['user_parameters_unordered']['action'] == 'delete') {
@@ -27,6 +28,15 @@ if (is_numeric($Params['user_parameters_unordered']['id']) && $Params['user_para
         if ($userDepartments === true || in_array($Msg->department_id, $userDepartments)) {
             erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.cannedmsg_before_remove',array('msg' => & $Msg));
         	$Msg->removeThis();
+
+            erLhcoreClassLog::logObjectChange(array(
+                'object' => $Msg,
+                'check_log' => true,
+                'msg' => array(
+                    'delete' => $Msg->getState(),
+                    'user_id' => $currentUser->getUserID()
+                )
+            ));
         }
         
     } catch (Exception $e) {
