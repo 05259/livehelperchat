@@ -34,6 +34,23 @@ $def->properties['type']->columnName   = 'type';
 $def->properties['type']->propertyName = 'type';
 $def->properties['type']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
 
+$def->properties['persistent'] = new ezcPersistentObjectProperty();
+$def->properties['persistent']->columnName   = 'persistent';
+$def->properties['persistent']->propertyName = 'persistent';
+$def->properties['persistent']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+// Log message on chat variable change
+$def->properties['change_message'] = new ezcPersistentObjectProperty();
+$def->properties['change_message']->columnName   = 'change_message';
+$def->properties['change_message']->propertyName = 'change_message';
+$def->properties['change_message']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_STRING;
+
+// Log message on chat variable change
+$def->properties['inv'] = new ezcPersistentObjectProperty();
+$def->properties['inv']->columnName   = 'inv';
+$def->properties['inv']->propertyName = 'inv';
+$def->properties['inv']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
 return $def;
 
 ?>

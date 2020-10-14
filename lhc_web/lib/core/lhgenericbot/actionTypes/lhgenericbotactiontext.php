@@ -22,6 +22,15 @@ class erLhcoreClassGenericBotActionText {
 
         $metaMessage = array();
 
+        if (isset($action['content']['html']) && !empty($action['content']['html']))
+        {
+            $metaMessage['content']['html']['content'] = erLhcoreClassGenericBotWorkflow::translateMessage($action['content']['html'], array('chat' => $chat));
+
+            if (isset($params['replace_array'])) {
+                $metaMessage['content']['html']['content'] = str_replace(array_keys($params['replace_array']),array_values($params['replace_array']),$metaMessage['content']['html']['content']);
+            }
+        }
+
         if (isset($action['content']['quick_replies']) && !empty($action['content']['quick_replies']))
         {
 
@@ -37,6 +46,7 @@ class erLhcoreClassGenericBotActionText {
                         'render' => $quickReply['content']['render_precheck_function'],
                         'render_args' => $quickReply['content']['render_args'],
                         'chat' => & $chat,
+                        'trigger' => $trigger,
                     ));
 
                     if ($validationResult !== false && isset($validationResult['content']['valid']) && $validationResult['content']['valid'] === false)
@@ -85,11 +95,6 @@ class erLhcoreClassGenericBotActionText {
             }
         }
 
-        if (isset($action['content']['html']) && !empty($action['content']['html']))
-        {
-            $metaMessage['content']['html']['content'] = erLhcoreClassGenericBotWorkflow::translateMessage($action['content']['html'], array('chat' => $chat));
-        }
-
         if (isset($action['content']['attr_options']) && !empty($action['content']['attr_options']))
         {
             $metaMessage['content']['attr_options'] = $action['content']['attr_options'];
@@ -123,11 +128,23 @@ class erLhcoreClassGenericBotActionText {
             $msg->msg = str_replace(array_keys($params['replace_array']),array_values($params['replace_array']),$msg->msg);
         }
 
-        $msg->meta_msg = !empty($metaMessage) ? json_encode($metaMessage) : '';
+        $msg->msg = erLhcoreClassGenericBotWorkflow::translateMessage($msg->msg, array('chat' => $chat));
+        $msg->meta_msg = !empty($metaMessage) ? json_encode($metaMessage) : (isset($params['meta_msg']) && !empty($params['meta_msg']) ? json_encode($params['meta_msg']) : '');
+
+        if (!empty($msg->meta_msg)){
+            $msg->meta_msg = erLhcoreClassGenericBotWorkflow::translateMessage($msg->meta_msg, array('chat' => $chat));
+        }
+
         $msg->chat_id = $chat->id;
         $msg->name_support = erLhcoreClassGenericBotWorkflow::getDefaultNick($chat);
         $msg->user_id = -2;
         $msg->time = time() + 5;
+
+        // Perhaps this message should be saved as a system message
+        if (isset($action['content']['attr_options']['as_system']) && $action['content']['attr_options']['as_system'] == true)
+        {
+            $msg->user_id = -1;
+        }
 
         if (!isset($params['do_not_save']) || $params['do_not_save'] == false) {
             erLhcoreClassChat::getSession()->save($msg);

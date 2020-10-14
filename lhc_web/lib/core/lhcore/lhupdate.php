@@ -2,8 +2,8 @@
 
 class erLhcoreClassUpdate
 {
-	const DB_VERSION = 200;
-	const LHC_RELEASE = 325;
+	const DB_VERSION = 220;
+	const LHC_RELEASE = 347;
 
 	public static function doTablesUpdate($definition){
 		$updateInformation = self::getTablesStatus($definition);
@@ -91,7 +91,7 @@ class erLhcoreClassUpdate
 				foreach ($columnsData as $column) {
 				    $existingColumns[] = $column['field'];
 				}
-				
+
 				foreach ($columnsData as $column) {
 					if (isset($definition['tables_alter'][$table][$column['field']])) {
 					    
@@ -123,15 +123,21 @@ class erLhcoreClassUpdate
 					foreach ($columnsData as $column) {
 						if ($columnDesired['field'] == $column['field']) {
 							$columnFound = true;
-							
-							if ($columnDesired['type'] != $column['type']) {
+
+                            if (($columnDesired['type'] != $column['type'] && strpos($column['type'],'(') !== false) || (strpos($column['type'],'(') === false && explode('(',$columnDesired['type'])[0] != explode(' ',$column['type'])[0])) {
+								$typeMatch = false;
+							}
+
+							if ($columnDesired['default'] != $column['default']) {
 								$typeMatch = false;
 							}
 
 							if ($column['collation'] != '' && isset($columnDesired['collation']) && $columnDesired['collation'] != $column['collation']) {
                                 $typeMatch = $collationMatch = false;
 							}
-						}	
+						}
+
+
 					}
 
 					if ($typeMatch == false) {
@@ -143,7 +149,9 @@ class erLhcoreClassUpdate
 						$extra = '';
 						if ($columnDesired['extra'] == 'auto_increment') {
 						    $extra = ' AUTO_INCREMENT';
-						}
+						} elseif ($columnDesired['default'] !== null) {
+                            $extra = " DEFAULT '{$columnDesired['default']}'";
+                        }
 
 						$collation = '';
                         if ($collationMatch == false) {
@@ -238,7 +246,7 @@ class erLhcoreClassUpdate
 			foreach ($dataTable as $record) {	
 
 				try {
-					$sql = "SELECT COUNT(*) as total_records FROM `{$table}` WHERE `{$tableIdentifier}` = :identifier_value";				
+					$sql = "SELECT COUNT(*) as total_records FROM `{$table}` WHERE `{$tableIdentifier}` = :identifier_value";
 					$stmt = $db->prepare($sql);
 					$stmt->bindValue(':identifier_value',$record[$tableIdentifier]);
 					$stmt->execute();

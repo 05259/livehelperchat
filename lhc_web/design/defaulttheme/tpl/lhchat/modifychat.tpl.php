@@ -15,8 +15,13 @@ setTimeout(function() {
 
 <ul class="nav nav-pills" role="tablist">
     <li role="presentation" class="nav-item"><a class="active nav-link" href="#mainchatmodify" aria-controls="mainchatmodify" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','User attribute');?></a></li>
+    
     <?php if (erLhcoreClassUser::instance()->hasAccessTo('lhchat','modifychatcore')) : ?>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#mainchatcore" aria-controls="mainchatcore" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','Chat attributes');?></a></li>
+    <?php endif; ?>
+    
+    <?php if (erLhcoreClassUser::instance()->hasAccessTo('lhchat','chatdebug')) : ?>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#chatdebug" aria-controls="chatdebug" role="tab" data-toggle="tab"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','Debug');?></a></li>
     <?php endif; ?>
 </ul>
 
@@ -28,6 +33,13 @@ setTimeout(function() {
                 <label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','E-mail');?></label>
                 <input class="form-control" type="text" placeholder="<?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','Recipient e-mail');?>" name="Email" value="<?php echo htmlspecialchars($chat->email);?>" />
             </div>
+
+            <?php if ($chat->online_user instanceof erLhcoreClassModelChatOnlineUser) : ?>
+            <div class="form-group">
+                <label><input type="checkbox" name="informReturn" <?php if (isset($chat->online_user->online_attr_system_array['lhc_ir']) && is_array($chat->online_user->online_attr_system_array['lhc_ir']) && in_array(erLhcoreClassUser::instance()->getUserID(),$chat->online_user->online_attr_system_array['lhc_ir'])) :?>checked="checked"<?php endif?> value="on"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','Inform me then visitor returns');?></label>
+                <p><small><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','E-mail is send then visitor starts new browsing session')?></small></p>
+            </div>
+            <?php endif; ?>
 
             <div class="form-group">
                 <label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/modifychat','Nick');?></label>
@@ -69,5 +81,12 @@ setTimeout(function() {
         </form>
     </div>
     <?php endif; ?>
+    
+    <?php if (erLhcoreClassUser::instance()->hasAccessTo('lhchat','chatdebug')) : ?>
+        <div role="tabpanel" class="tab-pane" id="chatdebug">
+            <pre class="fs11"><?php echo htmlspecialchars(json_encode($chat->getState(),JSON_PRETTY_PRINT)); ?></pre>
+        </div>
+    <?php endif; ?>
+    
 </div>
 

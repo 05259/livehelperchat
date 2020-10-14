@@ -1,3 +1,242 @@
+3.47v
+
+1. You can access now any argument in Rest API call. Usefull in webhooks.
+2. Webhooks
+3. Widget icons were not loading if PC already had Material Icons font. Thanks @AKapaceb
+4. New chrome cookie policy support for chrome extension https://doc.livehelperchat.com/docs/chrome-extension/
+5. Files will not be send as soon operator uploads them, we will add BBCode to them.
+6. New arguments for custom status icon position.
+
+execute doc/update_db/update_220.sql for update
+
+3.46v
+
+1. New positions for a new widget.
+
+execute doc/update_db/update_219.sql for update
+
+3.45v
+
+1. Option to pass chat variable as invisible for an operators.
+2. Option to have a log message on passed variable if it changes during chat session.
+3. Mail transcript option
+4. Change UX for department assignment to an operators. There was to many false reports and mixing between assigning department to operator.
+5. Fixed auto login link generation.
+6. RTL fixes
+7. Co-browsing setup instruction changes https://github.com/LiveHelperChat/livehelperchat/blob/master/lhc_web/doc/node_servers/cobrowsing/README.md
+8. Changes for easier docker support.
+9. Draggable modal various small changes.
+
+execute doc/update_db/update_218.sql for update
+
+3.44v
+
+1. Fixed few XSS vulnerabilities found by @rekter0 (Discord)
+2. (real) to (float) changes. Thanks to https://github.com/swidbert
+3. Widget will be shown as online if overload limit is reached, but there is bot setup in departmnet.
+4. Device type export in chat list.
+5. Updated GA tracking default template to sen event's to all installed site GA trackers.
+6. Canned messages import/export
+7. Draggable modals. Will remember position also.
+8. Bot text messages now can be send as system messages. Usefull to represent some information just to operators.
+9. Now in Rest API calls you can access any internal chat attribute.
+10. Adjusted widget loading workflow for slow internet cases.
+11. And many more small changes.
+
+There is no database update this time.
+
+3.43v
+
+1. Commands based on bot triggers
+
+execute doc/update_db/update_217.sql for update
+
+3.42v
+
+1. Option to do not store user typing text.
+2. Mobile notifications workflow improvements.
+2.1 We won't send notifications for messages if chat is pending. Only one notification about new chat will be send.
+2.2 New chat notification won't be send if chat is started with a bot. Notification will be send only if chat becomes pending.
+
+execute doc/update_db/update_216.sql for update
+
+3.41v
+
+1. Block listing window improvements.
+
+execute doc/update_db/update_215.sql for update
+
+3.40v
+
+1. Release in preparation for official mobile app release.
+2. Various other bot related changes.
+
+execute doc/update_db/update_214.sql for update
+
+3.39v
+
+1. Security improvements regarding postMessage workflow.
+2. In proactive invitation you will be able to choose on what device invitation should be triggered.
+3. Text matching rules for bot now supports wildcard and preg_match rules. Please refer to documentation.
+4. You now can prepend bot button directly in proactive invitation message.
+5. Proactive invitation will show small logo image of the operator.
+6. Slovakian siteaccess
+7. If HTTP_REFERER header not found we check also HTTP_ORIGIN now.
+8. !stopfiles will update visitor UI also.
+9. Rest API methods to work with a user.
+10. Proactive invitation if required can show full widget on invitation.
+
+And many many more various changes...
+
+execute doc/update_db/update_213.sql for update
+
+3.38v
+
+1. Bot conditional changes
+2. Chinese three dialects added as possible language options.
+3. Group chat tabs have indication about unread messages.
+
+execute doc/update_db/update_212.sql for update
+
+3.37v
+
+1. Had to separate bot assigned to a chat to a separate column. This will allow us to generate some charts like.
+2. Was the chat only with a bot or also operator was involved.
+
+execute doc/update_db/update_211.sql for update
+
+If you want to have capabilities to search by bot in the past chats you can run this script from your command line.
+
+php cron.php -s site_admin -c cron/util/migrate_gbot_id -p 0
+
+3.36v
+
+1. "Always online" operator mode. Usefull if you are using telegram and are using Auto assignment workflow.
+2. Auto responder has option to send notice to visitor if operator is speaking his language.
+
+execute doc/update_db/update_210.sql for update
+
+3.35v
+
+1. Group chats between operators
+2. More Rest API arguments for fetchmessages call
+3. In prefill variables workflow you can now prefill any chat variable you want.
+4. Files attatchement modal window is larger and has preview of images
+5. Password field type for custom variables defined from back office.
+
+execute doc/update_db/update_209.sql for update
+
+3.34v
+
+1. Canned messages new interface
+2. Passing variable has option to be persistent. It means variable in online visitors list will be preserved even if afterward it won't be passed.
+3. Offline messaging will respect priority and passed department.
+4. If NodeJS is enabled we should not be executing check messages call. Because NodeJS does that for us.
+5. Send Video in bot now supports iframes. So you can embed youtube video.
+6. If department was assigned to department group, operators max_chats limit was not respected.
+7. Rest API for adding user messages will return message data itself.
+8. Co-browsing new modal window for requesting screen share.
+9. Hash tag functionality for canned messages now has columns supports and left,right navigation between columns.
+10. New line were not respected if image was send in between operator messages.
+11. Canned messages has full HTML preview.
+12. RFC6265 Compatible cookie
+13. CLI Install update to recent version.
+14. Few fixes for PHP 7.4.5 compatibility.
+
+And a lot of other small changes...
+
+execute doc/update_db/update_208.sql for update
+
+3.33v
+
+1. Cookie path argument.
+2. Operator to operator chat improvements.
+3. Admin fields now can be prefilled.
+4. Hidden if prefilled option.
+5. Option to define explicitly in back office on what domains caht will work.
+6. If embed mode is used and leave a message is disabled and offline_redirect is provided. Live Helper Chat will redirect customer to provided page.
+7. Notifications about new messages will blink page title.
+8. Unread messages will be played only if page is not focused.
+9. Option to disable javascript embed in other pages.
+
+execute doc/update_db/update_207.sql for update
+
+3.32v
+
+1. Rest API Response trigger type. You will be able to integrate ant third party API easily.
+2. Added protection against recursion if some messes around and calls itself in bot building workflow.
+3. Option to set default actions for unknown button click.
+
+execute doc/update_db/update_206.sql for update
+
+3.31v
+
+1. Updated .htaccess files so Live Helper Chat should work out of the box with subdomain installations.
+2. PHP Session was starting where it should not have to. Will increase widget performance a little bit.
+3. If widget was minimized and restored again popup was not showing proactive invitation.
+
+There is no database update this time.
+
+3.30v
+
+1. Bot triggers enhancements.
+1.1 Regrouped triggers by their complexity.
+1.2 Repeat restriction trigger can be global or local per trigger.
+2. New widget out of beta and now is preferred one.
+3. Proactive will remain in the widget for all session once it's triggered. See how demo it works. It no longer disappears from widget on widget close.
+4. Active operator chats were not updated when owner of chat changed because of transfer.
+5. Metalanguage support everywhere.
+6. Changes required for multiple clients support.
+https://doc.livehelperchat.com/docs/chat/multiple-clients/
+It required to change permission if your operators does not see anymore all users/operators see
+https://doc.livehelperchat.com/docs/chat/transferring-chat/#my-operator-sees-only-to-him-assigned-departments-and-only-his-departments-operators
+7. Update how default dashboard will look like for a new installations.
+8. Operator passing in new widget
+9. Static URL generation in embed widget window
+10. Javascript native calls definition https://doc.livehelperchat.com/docs/javascript-arguments#public-methods
+11. Canned messages search will be performed also in title. https://doc.livehelperchat.com/docs/canned/#canned-messages-in-chat-interface
+12. RTL support for a new widget.
+13. Connection problems will be reported in dashboard.
+14. And many many more changes...
+
+See weekly changelog videos
+https://youtu.be/t2mzEE3sTss
+https://youtu.be/wxsDE9rDpa4
+https://youtu.be/SPyEX2EcWew
+https://youtu.be/dEsB6XdWc9g
+
+execute doc/update_db/update_205.sql for update
+
+3.29v
+
+1. Option to be informed about returning visitor.
+
+execute doc/update_db/update_204.sql for update
+
+3.28v
+
+1. From themes you can change new widget dimensions directly.
+2. Various new widget UI improvements.
+3. Translations update.
+
+execute doc/update_db/update_203.sql for update
+
+3.27v
+
+1. New widget. At the moment it's beta. It features rewritten widget implementation from zero. It's still missing few features but should be pretty stable now.
+2. In themes there is option now to activate automatic language detection from browser headers. For existing installation it to work you have to edit language. System configuration -> Speech -> Languages
+
+execute doc/update_db/update_202.sql for update
+
+3.26v
+
+1. Personal auto responder. Operators has to have permission "Uers" => "Allow user to have personal auto responder messages"
+2. Rest API has methods for work with Department/Bot
+3. Option to setup default checked charts.
+4. And may more small changes :)
+
+execute doc/update_db/update_201.sql for update
+
 3.25v
 
 1. Embeded live help widget also will track referrer page.

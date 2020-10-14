@@ -10,6 +10,7 @@ $breakSync = false;
 $content = 'false';
 $content_status = 'false';
 $userOwner = 'true';
+$chatsGone = [];
 
 $hasAccessToReadArray = array();
 
@@ -45,6 +46,12 @@ if (isset($_POST['chats']) && is_array($_POST['chats']) && count($_POST['chats']
 		        $MessageID = (int)$MessageID;
 		        
 		        $Chat = erLhcoreClassModelChat::fetch($chat_id);
+
+		        if (!($Chat instanceof erLhcoreClassModelChat)) {
+                    $chatsGone[] = $chat_id;
+		            continue;
+                }
+
 		        $Chat->updateIgnoreColumns = array('last_msg_id');
 		        
 		        if ( isset($hasAccessToReadArray[$chat_id]) || erLhcoreClassChat::hasAccessToRead($Chat) )
@@ -57,7 +64,7 @@ if (isset($_POST['chats']) && is_array($_POST['chats']) && count($_POST['chats']
 		            	if ( ($Chat->user_id == $currentUser->getUserID()) && ($Chat->has_unread_messages == 1 || $Chat->unread_messages_informed == 1)) {
 		            		 $Chat->has_unread_messages = 0;
 		            		 $Chat->unread_messages_informed = 0;
-		            		 $Chat->saveThis();
+		            		 $Chat->updateThis(array('update' => array('has_unread_messages','unread_messages_informed')));
 		            	}
 		
 		            	// Auto accept transfered chats if I have opened this chat
@@ -75,7 +82,8 @@ if (isset($_POST['chats']) && is_array($_POST['chats']) && count($_POST['chats']
 		
 		                $tpl->set('messages',$Messages);
 		                $tpl->set('chat',$Chat);
-		
+		                $tpl->set('current_user_id',$currentUser->getUserID());
+
 		                $msgText = '';
 		                if ($userOwner == 'true') {
 		                	foreach ($Messages as $msg) {
@@ -115,9 +123,11 @@ if (isset($_POST['chats']) && is_array($_POST['chats']) && count($_POST['chats']
 		            if ($Chat->operation_admin != '') {
 		            	$ReturnStatuses[$chat_id]['oad'] = $Chat->operation_admin;
 		            	$Chat->operation_admin = '';
-		            	$Chat->saveThis();
+		            	$Chat->updateThis(array('update' => array('operation_admin')));
 		            }	            
-		        }
+		        } else {
+                    $chatsGone[] = $chat_id;
+                }
 		
 		    }
 	    	$db->commit();
@@ -144,8 +154,12 @@ if (isset($_POST['chats']) && is_array($_POST['chats']) && count($_POST['chats']
     
 }
 
+$response = array('error' => 'false','uw' => $userOwner, 'result_status' => $content_status, 'result' => $content );
 
+if (!empty($chatsGone)) {
+    $response['cg'] = $chatsGone;
+}
 
-echo erLhcoreClassChat::safe_json_encode(array('error' => 'false','uw' => $userOwner, 'result_status' => $content_status, 'result' => $content ));
+echo erLhcoreClassChat::safe_json_encode($response);
 exit;
 ?>

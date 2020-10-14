@@ -1,10 +1,12 @@
 <?php
 
-header('content-type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept');
+erLhcoreClassRestAPIHandler::setHeaders();
 
-$subscription = $_POST['data'];
+if (isset($_POST['data'])) {
+    $subscription = $_POST['data'];
+} else {
+    $subscription = json_decode(file_get_contents('php://input'),true)['data'];
+}
 
 if ((string)$Params['user_parameters_unordered']['hash'] != '' && $subscription != '') {
 
@@ -52,7 +54,7 @@ if ((string)$Params['user_parameters_unordered']['hash'] != '' && $subscription 
 
             // Inform user that he has subscribed to notifications
             $msg = new erLhcoreClassModelmsg();
-            $msg->msg = "You have subscribed to new messages notifications!";
+            $msg->msg = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','You have subscribed to new messages notifications!');
             $msg->chat_id = $chat->id;
             $msg->user_id = -2;
             $msg->time = time();

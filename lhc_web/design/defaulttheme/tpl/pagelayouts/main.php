@@ -4,7 +4,7 @@
 	<head>
 		<?php include_once(erLhcoreClassDesign::designtpl('pagelayouts/parts/page_head.tpl.php'));?>
 	</head>
-<body ng-controller="LiveHelperChatCtrl as lhc" ng-init="lhc.getToggleWidget('pending_chats_sort',<?php (int)erLhcoreClassModelChatConfig::fetchCache('reverse_pending')->current_value == 1 ? print "'true'" : print "'false'"?>);">
+<body id="admin-body" class="pr-0" ng-controller="LiveHelperChatCtrl as lhc" ng-init="lhc.getToggleWidget('pending_chats_sort',<?php (int)erLhcoreClassModelChatConfig::fetchCache('reverse_pending')->current_value == 1 ? print "'true'" : print "'false'"?>);">
 <?php include(erLhcoreClassDesign::designtpl('pagelayouts/parts/page_top_content_multiinclude.tpl.php'));?>
 <?php include(erLhcoreClassDesign::designtpl('pagelayouts/parts/top_head_multiinclude.tpl.php'));?>
 
@@ -30,7 +30,7 @@
             $pendingTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_pending_list',1);
             $activeTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_active_list',1);
             $closedTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_close_list',0);
-            $mchatsTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_mchats_list',0);
+            $mchatsTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_mchats_list',1);
             $unreadTabEnabled = (int)erLhcoreClassModelUserSetting::getSetting('enable_unread_list',1); ?>
             <div class="columns col-sm-4 col-md-3 right-column-page-general" id="right-column-page" ng-cloak>
             	

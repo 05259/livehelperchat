@@ -63,7 +63,7 @@ class erLhAbstractModelProactiveChatInvitation {
 	}
 	
 	public function checkPermission(){
-		
+
 		$currentUser = erLhcoreClassUser::instance();
 		
 		/**
@@ -79,16 +79,8 @@ class erLhAbstractModelProactiveChatInvitation {
 	}
 	
 	public static function getFilter(){
-		
-		$currentUser = erLhcoreClassUser::instance();
-		$departmentParams = array();
-		$userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
-		if ($userDepartments !== true){
-			$departmentParams['filterin']['dep_id'] = $userDepartments;
-            $departmentParams['filterin']['dep_id'][] = 0;
-		}
-		
-		return $departmentParams;
+        // Global filters
+        return erLhcoreClassUserDep::conditionalDepartmentFilter(false,'dep_id');
 	}
 
 	public function getFields()
@@ -117,6 +109,7 @@ class erLhAbstractModelProactiveChatInvitation {
 	    
 	    return $items;
 	}
+
 
 	public function getModuleTranslations()
 	{
@@ -228,6 +221,28 @@ class erLhAbstractModelProactiveChatInvitation {
 		return '';
 	}
 
+	public static function getDeviceOptions() {
+
+	    $items = [];
+
+        foreach ([
+            1 => 'All devices',
+            0 => 'Desktop only',
+            2 => 'Mobile only',
+            3 => 'Tablet only',
+            4 => 'Mobile & Desktop',
+            5 => 'Tablet & Desktop',
+            6 => 'Mobile & Tablet',
+        ] as $id => $item) {
+            $itemStd = new stdClass();
+            $itemStd->id = $id;
+            $itemStd->name = $item;
+            $items[] = $itemStd;
+        }
+
+        return $items;
+    }
+
 	public static function processInjectHTMLInvitation(erLhcoreClassModelChatOnlineUser & $item, $params = array())
     {
         $referrer = self::getHost($item->referrer);
@@ -272,11 +287,31 @@ class erLhAbstractModelProactiveChatInvitation {
 	    } else {
 	        $appendTag = 'AND (tag = \'\')';
 	    }
-	    
+
+        // Device was not detected yet
+        if ($item->device_type == 0) {
+            $detect = new Mobile_Detect;
+            $detect->setUserAgent($item->user_agent);
+            $item->device_type = ($detect->isMobile() ? ($detect->isTablet() ? 3 : 2) : 1);
+            $item->updateThis(['update' => ['device_type']]);
+        }
+
+        $devicesFilter = [
+            1 => '(1,0,4,5)',
+            2 => '(1,2,4,6)',
+            3 => '(1,3,5,6)',
+        ];
+
+        $appendDevice = '';
+        if (isset($devicesFilter[$item->device_type])) {
+            $appendDevice = 'AND show_on_mobile IN ' . $devicesFilter[$item->device_type];
+        }
+
 	    $q->where( $q->expr->lte( 'time_on_site', $q->bindValue( $item->time_on_site ) ).' AND '.$q->expr->lte( 'pageviews', $q->bindValue( $item->pages_count ) ).'
 				AND ('.$q->expr->eq( 'siteaccess', $q->bindValue( erLhcoreClassSystem::instance()->SiteAccess ) ).' OR siteaccess = \'\')
 				AND ('.$q->expr->eq( 'identifier', $q->bindValue( $item->identifier ) ).' OR identifier = \'\')
 				' . $appendTag . '
+				' . $appendDevice . '
 				AND ('.$q->expr->eq( 'dep_id', $q->bindValue( $item->dep_id ) ).' OR dep_id = 0)
 	            AND `inject_only_html` = 0
 	            AND `dynamic_invitation` = 1
@@ -294,7 +329,9 @@ class erLhAbstractModelProactiveChatInvitation {
 	public static function setInvitation(erLhcoreClassModelChatOnlineUser & $item, $invitationId) {
 	    
 	    $message = self::fetch($invitationId);
-	    
+
+	    $message->translateByLocale();
+
 	    if ($item->total_visits == 1 || $message->message_returning == '') {
 	        $item->operator_message = $message->message;
 	    } else {
@@ -323,15 +360,73 @@ class erLhAbstractModelProactiveChatInvitation {
 	    if ($message->show_random_operator == 1) {
 	        $item->operator_user_id = erLhcoreClassChat::getRandomOnlineUserID(array('operators' => explode(',',trim($message->operator_ids))));
 	    }
-	    
-	    $message->executed_times += 1;
-	    $message->updateThis();
+
+        $message->executed_times += 1;
+        $message->updateThis(array('update' => array(
+            'executed_times'
+        )));
 	    	
 	    $item->saveThis();
 	    
 	    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('onlineuser.proactive_triggered', array('message' => & $message, 'ou' => & $item));
 	}
-	
+
+	public function translateByLocale()
+    {
+        $chatLocale = null;
+
+        // Detect user locale
+        if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            $parts = explode(';',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+            $languages = explode(',',$parts[0]);
+            if (isset($languages[0])) {
+                $chatLocale = $languages[0];
+            }
+        }
+
+        // We set custom chat locale only if visitor is not using default siteaccss and default langauge is not english.
+        if (erConfigClassLhConfig::getInstance()->getSetting('site','default_site_access') != erLhcoreClassSystem::instance()->SiteAccess) {
+            $siteAccessOptions = erConfigClassLhConfig::getInstance()->getSetting('site_access_options', erLhcoreClassSystem::instance()->SiteAccess);
+            // Never override to en
+            if (isset($siteAccessOptions['content_language']) && $siteAccessOptions['content_language'] != 'en') {
+                $chatLocale = $siteAccessOptions['content_language'];
+            }
+        }
+
+        if ($chatLocale !== null) {
+
+            $attributes =  $this->design_data_array;
+
+            $translatableAttributes = array(
+                'message',
+                'message_returning',
+                'message_returning',
+                'operator_name'
+            );
+
+            foreach ($translatableAttributes as $attr) {
+                if (isset($attributes[$attr . '_lang'])) {
+
+                    $translated = false;
+
+                    if ($chatLocale !== null) {
+                        foreach ($attributes[$attr . '_lang'] as $attrTrans) {
+                            if (in_array($chatLocale, $attrTrans['languages']) && $attrTrans['content'] != '') {
+                                $attributes[$attr] = $attrTrans['content'];
+                                $translated = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($translated === true) {
+                        $this->$attr = $attributes[$attr];
+                    }
+                }
+            }
+        }
+    }
+
 	public static function processProActiveInvitation(erLhcoreClassModelChatOnlineUser & $item, $params = array()) {
 
 		$referrer = self::getHost($item->referrer);
@@ -351,10 +446,30 @@ class erLhAbstractModelProactiveChatInvitation {
 		    $appendInvitationsId = 'AND id IN ('.implode(',', $params['invitation_id']).')';
 		}
 
-		$q->where( /*$q->expr->lte( 'time_on_site', $q->bindValue( $item->time_on_site ) ).' AND '.*/ $q->expr->lte( 'pageviews', $q->bindValue( $item->pages_count ) ).'
+		// Device was not detected yet
+		if ($item->device_type == 0) {
+            $detect = new Mobile_Detect;
+            $detect->setUserAgent($item->user_agent);
+            $item->device_type = ($detect->isMobile() ? ($detect->isTablet() ? 3 : 2) : 1);
+            $item->updateThis(['update' => ['device_type']]);
+        }
+
+		$devicesFilter = [
+		    1 => '(1,0,4,5)',
+		    2 => '(1,2,4,6)',
+		    3 => '(1,3,5,6)',
+        ];
+
+		$appendDevice = '';
+        if (isset($devicesFilter[$item->device_type])) {
+            $appendDevice = 'AND show_on_mobile IN ' . $devicesFilter[$item->device_type];
+        }
+
+		$q->where( $q->expr->lte( 'pageviews', $q->bindValue( $item->pages_count ) ).'
 				AND ('.$q->expr->eq( 'siteaccess', $q->bindValue( erLhcoreClassSystem::instance()->SiteAccess ) ).' OR siteaccess = \'\')
 				AND ('.$q->expr->eq( 'identifier', $q->bindValue( $item->identifier ) ).' OR identifier = \'\')
 				' . $appendTag . '
+				' . $appendDevice . '
 		        AND `dynamic_invitation` = 0
 		        AND `disabled` = 0
 		        AND `inject_only_html` = 0
@@ -380,6 +495,8 @@ class erLhAbstractModelProactiveChatInvitation {
                         return;
                     }
                 }
+
+                $message->translateByLocale();
 
                 // Use default message if first time visit or returning message is empty
                 if ($item->total_visits == 1 || $message->message_returning == '') {
@@ -417,7 +534,9 @@ class erLhAbstractModelProactiveChatInvitation {
                 )),'filter' => array('vid_id' => $item->id, 'invitation_id' => $message->id)));
 
                 $message->executed_times += 1;
-                $message->updateThis();
+                $message->updateThis(array('update' => array(
+                    'executed_times'
+                )));
 
                 // Campaign tracking
                 if (!($campaign instanceof erLhAbstractModelProactiveChatCampaignConversion)) {
@@ -454,7 +573,7 @@ class erLhAbstractModelProactiveChatInvitation {
 	}
 	
 	public function dependFooterJs(){
-	    return '<script type="text/javascript" src="'.erLhcoreClassDesign::designJS('js/angular-sanitize.min.js;js/angular.lhc.events.js').'"></script>';
+	    return '<script type="text/javascript" src="'.erLhcoreClassDesign::designJS('js/angular-sanitize.min.js;js/angular.lhc.events.js;js/angular.lhc.theme.js').'"></script>';
 	}
 	
 	public function validateInput($params)
@@ -619,7 +738,7 @@ class erLhAbstractModelProactiveChatInvitation {
 	public $iddle_for = 0;
 	public $event_type = 0;
 	public $autoresponder_id = 0;
-	public $show_on_mobile = 0;
+	public $show_on_mobile = 1;
 	public $delay = 0;
 	public $delay_init = 0;
 	public $show_instant = 0;

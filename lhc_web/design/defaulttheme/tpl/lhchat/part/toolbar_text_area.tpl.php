@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="pr-2 pl-2">
-                    <button class="btn btn-outline-secondary w-100 btn-xs" id="color-apply-<?php echo $chat->id?>" data-selector="<?php echo $bbcodeOptions['selector']?>" onclick="lhinst.handleBBCode($(this))" data-bbcode-end="color" data-bbcode="fs<?php echo 10+$i;?>" ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/adminchat','Apply')?></button>
+                    <button class="btn btn-outline-secondary w-100 btn-xs" id="color-apply-<?php echo $chat->id?>" data-selector="<?php echo $bbcodeOptions['selector']?>" onclick="lhinst.handleBBCode($(this))" data-bbcode-end="color" data-bbcode="color=00FF00" ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/adminchat','Apply')?></button>
                 </div>
             </div>
         </div>
@@ -59,6 +59,8 @@
 
     <div class="btn-group btn-group-sm mr-2<?php if ($chat->status == erLhcoreClassModelChat::STATUS_CLOSED_CHAT) : ?> hide<?php endif;?>" id="action-block-row-<?php echo $chat->id?>">
         <?php include(erLhcoreClassDesign::designtpl('lhchat/part/speech_action.tpl.php')); ?>
+
+        <?php include(erLhcoreClassDesign::designtpl('lhchat/part/voice_action.tpl.php')); ?>
 
         <?php include(erLhcoreClassDesign::designtpl('lhchat/part/translation_action.tpl.php')); ?>
 

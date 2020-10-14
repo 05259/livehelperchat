@@ -17,6 +17,14 @@ class erLhAbstractModelWidgetTheme {
 		$stateArray = array (
 			'id'         				=> $this->id,
 			'name'  					=> $this->name,
+			'enable_widget_embed_override' => $this->enable_widget_embed_override,
+			'widget_show_leave_form'       => $this->widget_show_leave_form,
+			'widget_survey'             => $this->widget_survey,
+			'widget_position'           => $this->widget_position,
+			'widget_popwidth'           => $this->widget_popwidth,
+			'widget_popheight'          => $this->widget_popheight,
+			'widget_pright'             => $this->widget_pright,
+			'widget_pbottom'           => $this->widget_pbottom,
 			'name_company'  			=> $this->name_company,
 			'onl_bcolor'				=> $this->onl_bcolor,			
 			'bor_bcolor'				=> $this->bor_bcolor,			
@@ -94,6 +102,7 @@ class erLhAbstractModelWidgetTheme {
 
 			'hide_ts'                   => $this->hide_ts,
 			'widget_response_width'     => $this->widget_response_width,
+			'modified'                  => $this->modified,
 		);
 
 		erLhcoreClassChatEventDispatcher::getInstance()->dispatch('lhabstract.erlhabstractmodelwidgettheme.getstate',array('state' => & $stateArray, 'object' => & $this));
@@ -121,7 +130,7 @@ class erLhAbstractModelWidgetTheme {
 		}
 	}
 
-	public function movePhoto($attr, $isLocal = false, $localFile = false)
+    public function movePhoto($attr, $isLocal = false, $localFile = false)
 	{
 		$this->deletePhoto($attr);
 	
@@ -194,12 +203,14 @@ class erLhAbstractModelWidgetTheme {
 	    'path' => array(
             array('url' => erLhcoreClassDesign::baseurl('system/configuration'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('department/edit','System configuration')),
 	        array('url' => erLhcoreClassDesign::baseurl('theme/index'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('theme/index','Themes'))
-        ), 'permission_delete' => array('module' => 'lhchat','function' => 'administratethemes'),'permission' => array('module' => 'lhchat','function' => 'administratethemes'),'name' => erTranslationClassLhTranslation::getInstance()->getTranslation('abstract/widgettheme','Widget themes'));
+        ), 'permission_delete' => array('module' => 'lhtheme','function' => 'administratethemes'),'permission' => array('module' => 'lhtheme','function' => 'administratethemes'),'name' => erTranslationClassLhTranslation::getInstance()->getTranslation('abstract/widgettheme','Widget themes'));
 	    
 	    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('feature.can_use_themes', array('object_meta_data' => & $metaData));
 	    
 	    return $metaData;
 	}
+
+
 
 	public function afterSave()
     {
@@ -268,16 +279,16 @@ class erLhAbstractModelWidgetTheme {
                    ),
                    'replace' => array(
                        $host,
-                       $host . $this->logo_image_url,
-                       $host . $this->minimize_image_url,
-                       $host . $this->restore_image_url,
-                       $host . $this->close_image_url,
-                       $host . $this->popup_image_url,
-                       $host . $this->operator_image_url,
-                       $host . $this->copyright_image_url,
-                       $host . $this->need_help_image_url,
-                       $host . $this->online_image_url,
-                       $host . $this->offline_image_url,
+                       $this->logo_image_url,
+                       $this->minimize_image_url,
+                       $this->restore_image_url,
+                       $this->close_image_url,
+                       $this->popup_image_url,
+                       $this->operator_image_url,
+                       $this->copyright_image_url,
+                       $this->need_help_image_url,
+                       $this->online_image_url,
+                       $this->offline_image_url,
                    ));
                return $this->replace_array;
                break;
@@ -296,7 +307,7 @@ class erLhAbstractModelWidgetTheme {
 	   	       $attr = str_replace('_url', '', $var);	   	       	   	       
 	   	       $this->$var = false;	   	        
 	   	       if ($this->$attr != ''){
-	   	           $this->$var =  ($this->{$attr.'_path'} != '' ? erLhcoreClassSystem::instance()->wwwDir() : erLhcoreClassSystem::instance()->wwwImagesDir() ) . '/' . $this->{$attr.'_path'} . $this->$attr;
+	   	           $this->$var =  ($this->{$attr.'_path'} != '' ? '//' . $_SERVER['HTTP_HOST'] . erLhcoreClassSystem::instance()->wwwDir() : erLhcoreClassSystem::instance()->wwwImagesDir() ) . '/' . $this->{$attr.'_path'} . $this->$attr;
 	   	       }	   	        
 	   	       return $this->$var;
 	   	    break;
@@ -314,7 +325,7 @@ class erLhAbstractModelWidgetTheme {
 	   	        $attr = str_replace('_url_img', '', $var);	   	    
 	   			$this->$var = false;	   		
 	   			if($this->$attr != ''){
-	   				$this->$var = '<img src="'.($this->{$attr.'_path'} != '' ? erLhcoreClassSystem::instance()->wwwDir() : erLhcoreClassSystem::instance()->wwwImagesDir() ) .'/'.$this->{$attr.'_path'} . $this->$attr.'"/>';
+	   				$this->$var = '<img src="'.($this->{$attr.'_path'} != '' ? '//' . $_SERVER['HTTP_HOST'] . erLhcoreClassSystem::instance()->wwwDir() : erLhcoreClassSystem::instance()->wwwImagesDir() ) .'/'.$this->{$attr.'_path'} . $this->$attr.'"/>';
 	   			}
 	   			return $this->$var;
 	   		break;
@@ -364,6 +375,14 @@ class erLhAbstractModelWidgetTheme {
 
 	public function beforeRemove()
     {
+        // If theme is removed we have to reset default theme if it was the one
+        $themeData = erLhcoreClassModelChatConfig::fetch('default_theme_id');
+
+        if ($themeData->value == $this->id) {
+            $themeData->value = 0;
+            $themeData->saveThis();
+        }
+        
         $imagesToRemove = array(
             'online_image',
             'offline_image',
@@ -386,12 +405,14 @@ class erLhAbstractModelWidgetTheme {
     {
         $this->bot_configuration = json_encode($this->bot_configuration_array);
         $this->notification_configuration = json_encode($this->notification_configuration_array);
+        $this->modified = time();
     }
 
     public function beforeSave()
     {
         $this->bot_configuration = json_encode($this->bot_configuration_array);
         $this->notification_configuration = json_encode($this->notification_configuration_array);
+        $this->modified = time();
     }
     
 	public function dependCss()
@@ -403,29 +424,118 @@ class erLhAbstractModelWidgetTheme {
     {
 		return '<script type="text/javascript" src="'.erLhcoreClassDesign::designJS('js/colorpicker.js;js/ace/ace.js').'"></script>';
 	}
+
+    public function dependFooterJs()
+    {
+        return '<script type="text/javascript" src="'.erLhcoreClassDesign::designJS('js/angular.lhc.theme.js').'"></script>';
+    }
 	
 	public function customForm()
     {
 		return 'widget_theme.tpl.php';
 	}
 
+	public function translate() {
+        $chatLocale = null;
+        $chatLocaleFallback = erConfigClassLhConfig::getInstance()->getDirLanguage('content_language');
+
+        // Detect user locale
+        if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            $parts = explode(';',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+            $languages = explode(',',$parts[0]);
+            if (isset($languages[0])) {
+                $chatLocale = $languages[0];
+            }
+        }
+
+        $attributesDirect = array(
+            'pending_join_queue',
+            'bot_status_text',
+            'support_joined',
+            'support_closed',
+            'pending_join',
+            'noonline_operators',
+            'noonline_operators_offline',
+            'department_title',
+            'department_select',
+            'explain_text',
+            'need_help_text',
+            'need_help_header',
+            'intro_operator_text',
+        );
+
+        $translatableAttributes = array_merge(array(
+            'custom_start_button_offline',
+            'custom_start_button_bot',
+            'custom_start_button',
+            'inject_html',
+            'custom_html_status',
+            'custom_html_header_body',
+            'custom_html_header',
+            'custom_html_widget_bot',
+            'custom_html_bot',
+            'custom_html_widget',
+            'custom_html',
+            'thank_feedback',
+            'placeholder_message',
+            'need_help_html',
+            'chat_unavailable',
+            'custom_op_name',
+        ),$attributesDirect);
+
+        $attributes = $this->bot_configuration_array;
+
+        foreach ($translatableAttributes as $attr) {
+            if (isset($attributes[$attr . '_lang'])) {
+
+                $translated = false;
+
+                if ($chatLocale !== null) {
+                    foreach ($attributes[$attr . '_lang'] as $attrTrans) {
+                        if (in_array($chatLocale, $attrTrans['languages']) && $attrTrans['content'] != '') {
+                            $attributes[$attr] = $attrTrans['content'];
+                            $translated = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($translated == false) {
+                    foreach ($attributes[$attr . '_lang'] as $attrTrans) {
+                        if (in_array($chatLocaleFallback, $attrTrans['languages']) && $attrTrans['content'] != '') {
+                            $attributes[$attr] = $attrTrans['content'];
+                            $translated = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($translated === true && in_array($attr,$attributesDirect)) {
+                    $this->$attr = $attributes[$attr];
+                }
+            }
+        }
+
+        $this->bot_configuration_array = $attributes;
+    }
+
    	public $id = null;
 	public $name = '';
 	public $onl_bcolor = '0c8fc4';
-	public $text_color = '000000';
+	public $text_color = '';
 	public $bor_bcolor = 'e3e3e3';
 	public $online_image = '';
 	public $offline_image = '';
 	public $online_image_path = '';
 	public $offline_image_path = '';
 	public $header_background = '525252';
-	public $need_help_bcolor = '92B830';
-	public $need_help_hover_bg = '84A52E';
+	public $need_help_bcolor = '';
+	public $need_help_hover_bg = '';
 	public $need_help_image = '';	
-	public $need_help_tcolor = 'ffffff';
-	public $need_help_border = 'dbe257';
-	public $need_help_close_bg = '435A05';
-	public $need_help_close_hover_bg = '74990F';
+	public $need_help_tcolor = '';
+	public $need_help_border = '';
+	public $need_help_close_bg = '';
+	public $need_help_close_hover_bg = '';
 	public $need_help_image_path = '';
 	public $custom_status_css = '';
 	public $custom_container_css = '';
@@ -445,7 +555,7 @@ class erLhAbstractModelWidgetTheme {
 	public $explain_text = '';
 	public $intro_operator_text = '';
 	public $widget_border_color = 'cccccc';	
-	public $hide_close = 0;
+	public $hide_close = 1;
 	public $hide_popup = 0;	
 	public $minimize_image = '';
 	public $minimize_image_path = '';	
@@ -459,7 +569,7 @@ class erLhAbstractModelWidgetTheme {
 	public $name_company = '';
 	public $header_height = 0;
 	public $header_padding = 0;
-	public $widget_border_width = 0;
+	public $widget_border_width = 1;
 	public $show_need_help = 1;
 	public $show_need_help_timeout = 24;
 	public $show_need_help_delay = 0;
@@ -492,9 +602,20 @@ class erLhAbstractModelWidgetTheme {
     public $hide_ts = 0;
     public $widget_response_width = 0;
 
+    // Theme modified time. We will use this attribute for E-Tag
+    public $modified = 0;
+
+    public $enable_widget_embed_override = 0;
+    public $widget_show_leave_form = 0;
+    public $widget_survey = 0;
+    public $widget_position = '';
+    public $widget_popwidth = 500;
+    public $widget_popheight = 520;
+    public $widget_pright = 0;
+    public $widget_pbottom = 0;
+
 	public $hide_add = false;
 	public $hide_delete = false;
-
 }
 
 ?>

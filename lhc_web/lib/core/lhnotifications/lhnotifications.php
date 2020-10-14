@@ -36,10 +36,12 @@ class erLhcoreClassNotifications {
 
         if (empty($Errors)) {
             try {
-                $res = self::sendNotification(erLhcoreClassModelChat::fetch($input->chat_id), $subscriber);
+                $report = self::sendNotification(erLhcoreClassModelChat::fetch($input->chat_id), $subscriber);
 
-                if ($res !== true && $res['success'] == false) {
-                    throw new Exception(htmlspecialchars($res['message']));
+                $endpoint = $report->getRequest()->getUri()->__toString();
+
+                if (!$report->isSuccess()) {
+                    $Errors[] = "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
                 }
 
             } catch (Exception $e) {
@@ -115,9 +117,13 @@ class erLhcoreClassNotifications {
 
             $notificationConfiguration = $subscriber->theme->notification_configuration_array;
 
+            if (isset($notificationConfiguration['ndomain']) && !empty($notificationConfiguration['ndomain'])) {
+                $data['http_host'] = $notificationConfiguration['ndomain'];
+            }
+
             $icon = $subscriber->theme->notification_icon_url;
             if ($icon != '') {
-                $data['icon'] = (strpos($icon,'http') === false) ? 'https://' . $data['http_host'] . $icon : $icon;
+                $data['badge'] = $data['icon'] = (strpos($icon,'http') === false) ? 'https://' . $data['http_host'] . $icon : $icon;
             }
 
             if (isset($notificationConfiguration['ntitle']) && !empty($notificationConfiguration['ntitle'])) {
@@ -146,14 +152,11 @@ class erLhcoreClassNotifications {
             $payload['vibrate'] = explode(',',$data['vibrate']);
         }
 
-        $res = $webPush->sendNotification(
+        return $webPush->sendOneNotification(
             $subscriptionDestination,
             json_encode($payload),
-            true,
-            ['topic' => 'lhc_chat_' . $item->id]
+            ['topic' => 'lhc_chat_' . $item->id, 'TTL' => 5000]
         );
-
-        return $res;
     }
 
     public static function informAboutUnreadMessages()
@@ -173,7 +176,7 @@ class erLhcoreClassNotifications {
             $subscriber = erLhcoreClassModelNotificationSubscriber::findOne(array('sort' => 'id DESC', 'filter_custom' => array('`chat_id` = ' . (int)$item->id . ($item->online_user_id > 0 ? ' OR `online_user_id` = ' . (int)$item->online_user_id : ''))));
 
             if ($subscriber instanceof erLhcoreClassModelNotificationSubscriber) {
-                 self::sendNotification($item, $subscriber);
+                self::sendNotification($item, $subscriber);
                 $stats[] = $item->id;
             }
         }

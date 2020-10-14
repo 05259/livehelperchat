@@ -16,7 +16,8 @@ return array_merge(array (
 
         'erConfigClassLhCacheConfig' => 'lib/core/lhconfig/lhcacheconfig.php',
         'erLhcoreClassRestAPIHandler' => 'lib/core/lhrestapi/lhrestapivalidator.php',
-    
+        'erLhcoreClassRestAPIUserValidator' => 'lib/core/lhrestapi/lhrestapiuservalidator.php',
+
         'erLhcoreClassTransfer' => 'lib/core/lhcore/lhtransfer.php',
         'PHPMailer'             => 'lib/core/lhcore/class.phpmailer.php',
         'SMTP'                  => 'lib/core/lhcore/class.smtp.php',
@@ -46,7 +47,7 @@ return array_merge(array (
         'Clamav'                     => 'lib/core/lhexternal/Clamav.php',
 
         'erLhcoreClassBBCode'       => 'lib/core/lhbbcode/lhbbcode.php',
-
+        'erLhcoreClassBBCodePlain'  => 'lib/core/lhbbcode/lhbbcode_cleanup.php',
 
         'erLhcoreClassDepartament' => 'lib/core/lhdepartament/lhdepartament.php',
         'erLhcoreClassUserDep'      => 'lib/core/lhdepartament/lhuserdep.php',
@@ -237,7 +238,8 @@ return array_merge(array (
         'erLhcoreClassTranslate'                    => 'lib/core/lhtranslate/lhtranslate.php',
         'erLhcoreClassTranslateBing'                => 'lib/core/lhtranslate/lhbingtranslate.php',
         'erLhcoreClassTranslateGoogle'              => 'lib/core/lhtranslate/lhgoogletranslate.php',
-
+        'erLhcoreClassTranslateYandex'              => 'lib/core/lhtranslate/lhyandextranslate.php',
+        
 		'erLhcoreClassDBTrait'       				=> 'lib/core/lhcore/lhdbtrait.php',
 		'lhSecurity'       				            => 'lib/core/lhexternal/lhsecurity.php',
 		'erLhcoreClassChatPaid'       				=> 'lib/core/lhchat/lhchatpaid.php',
@@ -277,6 +279,7 @@ return array_merge(array (
         'erLhcoreClassGenericBotActionTyping'       => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactiontyping.php',
         'erLhcoreClassGenericBotActionProgress'     => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionprogress.php',
         'erLhcoreClassGenericBotActionVideo'        => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionvideo.php',
+        'erLhcoreClassGenericBotActionExecute_js'     => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionexecute_js.php',
         'erLhcoreClassGenericBotActionAttribute'    => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionattribute.php',
         'erLhcoreClassGenericBotActionActions'      => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionactions.php',
         'erLhcoreClassGenericBotActionIntent'       => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionintent.php',
@@ -285,11 +288,29 @@ return array_merge(array (
         'erLhcoreClassGenericBotActionMatch_actions'=> 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionmatch_actions.php',
         'erLhcoreClassGenericBotActionEvent_type'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionevent_type.php',
         'erLhcoreClassGenericBotActionRepeat_restrict'   => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionrepeat_restrict.php',
+        'erLhcoreClassGenericBotActionRestapi'      => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactionrestapi.php',
+        'erLhcoreClassGenericBotActionTbody'        => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactiontbody.php',
+        'erLhcoreClassGenericBotActionText_conditional' => 'lib/core/lhgenericbot/actionTypes/lhgenericbotactiontext_conditional.php',
+        'erLhcoreClassModelGenericBotCommand'       => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotcommand.php',
 
+        'erLhcoreClassModelGenericBotRestAPI'       => 'lib/models/lhgenericbot/erlhcoreclassmodelgenericbotrestapi.php',
+        'erLhcoreClassLHCBotWorker'                 => 'lib/core/lhgenericbot/lhgenericbotworker.php',
+
+        // Group chat
+        'erLhcoreClassModelGroupChat'               => 'lib/models/lhchat/erlhcoreclassmodelgroupchat.php',
+        'erLhcoreClassGroupChat'                    => 'lib/core/lhchat/lhgroupchat.php',
+        'erLhcoreClassModelGroupMsg'                => 'lib/models/lhchat/erlhcoreclassmodelgroupmsg.php',
+        'erLhcoreClassModelGroupChatMember'         => 'lib/models/lhchat/erlhcoreclassmodelgroupchatmember.php',
 
         // Notifications
         'erLhcoreClassNotifications'                => 'lib/core/lhnotifications/lhnotifications.php',
-        'erLhcoreClassModelNotificationSubscriber'  => 'lib/models/lhnotifications/erlhcoreclassmodelnotificationsubscriber.php'
+        'erLhcoreClassModelNotificationSubscriber'  => 'lib/models/lhnotifications/erlhcoreclassmodelnotificationsubscriber.php',
+        'erLhcoreClassLHCMobile'                    => 'lib/core/lhmobile/lhmobile.php',
+
+        // Web hooks
+        'erLhcoreClassChatWebhookHttp'              => 'lib/core/lhchat/lhchatwebhookhttp.php',
+        'erLhcoreClassModelChatWebhook'             => 'lib/models/lhchat/erlhcoreclassmodelchatwebhook.php',
+        'erLhcoreClassChatWebhookResque'            => 'lib/core/lhchat/lhchatwebhookresque.php',
 
 ),
 include('var/autoloads/lhextension_autoload.php')

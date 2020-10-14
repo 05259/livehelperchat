@@ -19,23 +19,15 @@
 		<div class="col-md-2">
 		  <div class="form-group">
 				<label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Department');?></label>
-				<?php /*echo erLhcoreClassRenderHelper::renderCombobox( array (
-	                    'input_name'     => 'department_id',
-						'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Select department'),
-	                    'selected_id'    => $input->department_id,
-				        'css_class'      => 'form-control',				
-	                    'list_function'  => 'erLhcoreClassModelDepartament::getList'
-	            ));*/ ?>
-
-              <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
+                <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
                   'input_name'     => 'department_ids[]',
                   'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department'),
                   'selected_id'    => $input->department_ids,
                   'css_class'      => 'form-control',
                   'display_name'   => 'name',
+                  'list_function_params' => erLhcoreClassUserDep::conditionalDepartmentFilter(),
                   'list_function'  => 'erLhcoreClassModelDepartament::getList'
-              )); ?>
-
+                )); ?>
 		  </div>
 		</div>
 
@@ -48,41 +40,24 @@
                     'selected_id'    => $input->department_group_ids,
                     'css_class'      => 'form-control',
                     'display_name'   => 'name',
+                    'list_function_params' => erLhcoreClassUserDep::conditionalDepartmentGroupFilter(),
                     'list_function'  => 'erLhcoreClassModelDepartamentGroup::getList'
                 )); ?>
-
-                <?php /*echo erLhcoreClassRenderHelper::renderCombobox( array (
-                    'input_name'     => 'department_group_id',
-                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Choose department group'),
-                    'selected_id'    => $input->department_group_id,
-                    'css_class'      => 'form-control',
-                    'list_function'  => 'erLhcoreClassModelDepartamentGroup::getList'
-                ));*/ ?>
             </div>
         </div>
 
         <div class="col-md-2">
 		   <div class="form-group">
 			<label><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','User');?></label>
-
-               <?php /*echo erLhcoreClassRenderHelper::renderCombobox( array (
-	                    'input_name'     => 'user_id',
-						'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Select user'),
-	                    'selected_id'    => $input->user_id,
-			            'css_class'      => 'form-control',
-						'display_name' => 'name_official',
-	                    'list_function'  => 'erLhcoreClassModelUser::getUserList'
-	            ));*/ ?>
-
                <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
                    'input_name'     => 'user_ids[]',
                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Select user'),
                    'selected_id'    => $input->user_ids,
                    'css_class'      => 'form-control',
                    'display_name'   => 'name_official',
+                   'list_function_params' => erLhcoreClassGroupUser::getConditionalUserFilter(),
                    'list_function'  => 'erLhcoreClassModelUser::getUserList'
                )); ?>
-
 		  </div>
 		</div>
 
@@ -105,6 +80,7 @@
                     'selected_id'    => $input->group_ids,
                     'css_class'      => 'form-control',
                     'display_name'   => 'name',
+                    'list_function_params' => erLhcoreClassGroupUser::getConditionalUserFilter(false, true),
                     'list_function'  => 'erLhcoreClassModelGroup::getList'
                 )); ?>
 
@@ -255,6 +231,7 @@
 				<option value=""><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Any');?></option>
 				<option value="0" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_PENDING_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Pending chats');?></option>
 				<option value="1" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_ACTIVE_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Active chats');?></option>
+				<option value="5" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_BOT_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Bot chats');?></option>
 				<option value="2" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_CLOSED_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Closed chats');?></option>
 				<option value="3" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_CHATBOX_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Chatbox chats');?></option>
 				<option value="4" <?php if ($input->chat_status === erLhcoreClassModelChat::STATUS_OPERATORS_CHAT) : ?>selected="selected"<?php endif;?>><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Operators chats');?></option>
@@ -322,6 +299,7 @@
                     'selected_id'    => $input->subject_id,
                     'css_class'      => 'form-control form-control-sm',
                     'display_name'   => 'name',
+                    'list_function_params'  => (new erLhAbstractModelSubject())->getFilter(),
                     'list_function'  => 'erLhAbstractModelSubject::getList'
                 )); ?>
             </div>
@@ -360,6 +338,29 @@
         	   <label class="col-form-label"><input type="checkbox" name="anonymized" <?php $input->anonymized == 1 ? print ' checked="checked" ' : ''?> value="on" /><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Anonymised')?></label>
         	</div>
 		</div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <?php echo erLhcoreClassRenderHelper::renderMultiDropdown( array (
+                    'input_name'     => 'bot_ids[]',
+                    'optional_field' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Select bot'),
+                    'selected_id'    => $input->bot_ids,
+                    'css_class'      => 'form-control',
+                    'display_name'   => 'name',
+                    'list_function_params' => [],
+                    'list_function'  => 'erLhcoreClassModelGenericBotBot::getList'
+                )); ?>
+            </div>
+        </div>
+        <div class="col-md-10">
+            <div class="row">
+                <div class="col-3"><label><input type="checkbox" name="no_operator" value="1" <?php $input->no_operator == true ? print 'checked="checked"' : ''?> ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Chats without an operator')?></label></div>
+                <div class="col-3"><label><input type="checkbox" name="has_operator" value="1" <?php $input->has_operator == true ? print 'checked="checked"' : ''?> ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Chats with an operator')?></label></div>
+                <div class="col-3"><label><input type="checkbox" name="with_bot" value="1" <?php $input->with_bot == true ? print 'checked="checked"' : ''?> ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Chats which had a bot')?></label></div>
+                <div class="col-3"><label><input type="checkbox" name="without_bot" value="1" <?php $input->without_bot == true ? print 'checked="checked"' : ''?> ><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/lists/search_panel','Chats which did not had a bot')?></label></div>
+            </div>
+        </div>
+
+
     </div>
 
 

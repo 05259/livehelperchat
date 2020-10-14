@@ -44,6 +44,7 @@ var lh_inst  = {
     disabledGeo : <?php echo (isset($disableByGeoAdjustment) && $disableByGeoAdjustment == true) ? 'true' : 'false' ?>,
     checkOperatorMessage : <?php echo $check_operator_messages == true ? 'true' : 'false'?>,
 	offset_data : '',
+    reset : <?php isset($fresh) && $fresh == true ? print 'true' : print 'false'?>,
 	lang: '<?php echo erLhcoreClassSystem::instance()->WWWDirLang?>',
 	langDefault: '/<?php echo erLhcoreClassSystem::instance()->SiteAccess?>',
 	is_dragging : false,
@@ -58,8 +59,10 @@ var lh_inst  = {
     surveyShown : false,
     isMinimized : false,
     explicitClose : false,
+    iframeLoaded : false,
     isProactivePending : 0,
     dynamicAssigned : [],
+    extensionCommands : [],
     windowname : "startchatwindow",
 	substatus : '',
     cookieData : {},
@@ -318,9 +321,9 @@ var lh_inst  = {
     <?php include(erLhcoreClassDesign::designtpl('lhchat/getstatus/functions/part/show_survey.tpl.php')); ?>
 
     getAppendCookieArguments : function() {
-		    var hashAppend = this.cookieData.hash ? '/(hash)/'+this.cookieData.hash : '';
+		    var hashAppend = this.cookieData.hash && this.reset == false  ? '/(hash)/'+this.cookieData.hash : '';
 		    var vidAppend = this.cookieDataPers.vid ? '/(vid)/'+this.cookieDataPers.vid : '';
-		    var hashResume = this.cookieData.hash_resume ? '/(hash_resume)/'+this.cookieData.hash_resume : '';
+		    var hashResume = this.cookieData.hash_resume && this.reset == false  ? '/(hash_resume)/'+this.cookieData.hash_resume : '';
 		    var soundOption = this.cookieData.s ? '/(sound)/'+this.cookieData.s : '';
 		    var explicitClose = this.explicitClose ? '/(eclose)/t' : '';
 
@@ -783,6 +786,23 @@ var lh_inst  = {
     	}
     },
 
+    executeExtension : function(extension, args) {
+        if (this.iframeLoaded) {
+            if (this.isMinimized === true) {
+                this.min()
+            } else {
+                this.showStartWindow();
+            }
+            var iframe = document.getElementById('<?php echo $chatCSSPrefix?>_iframe');
+            if (iframe !== null) {
+                iframe.contentWindow.postMessage('lhc_load_ext:'+extension + '::' + this.JSON.stringify(typeof args !== 'undefined' ? args : null), '*');
+            }
+        } else {
+            this.showStartWindow();
+            this.extensionCommands.push({'ext':extension, 'arg':args});
+        }
+    },
+
     makeScreenshot : function() {
     	var inst = this;
     	if (typeof html2canvas == "undefined") {
@@ -1021,6 +1041,12 @@ var lh_inst  = {
     handleMessage : function(e) {
         if (typeof e.data !== 'string') { return; }
     	var action = e.data.split(':')[0];
+        var originDomain = e.origin.replace("http://", "").replace("https://", "").replace(/:(\d+)$/,'');
+
+        // We allow to send events only from chat installation or page where script is embeded.
+        if (originDomain !== '<?php echo $_SERVER['HTTP_HOST']?>' && originDomain !== document.domain) {
+            return;
+        }
 
         if (action == 'lhc_newopmsg') {
             if ( lh_inst.isMinimized == true) {
@@ -1057,10 +1083,22 @@ var lh_inst  = {
     	} else if (action == 'lhc_open_restore') {
     		lh_inst.lh_openchatWindow();
         } else if (action == 'lhc_widget_loaded') {
+            lh_inst.iframeLoaded = true;
             if (lh_inst.iframePreloaded == false) {
                 lh_inst.toggleStatusWidget(true);
                 lh_inst.removeClass(document.getElementById('<?php echo $chatCSSLayoutOptions['container_id']?>'),'<?php echo $chatCSSPrefix?>-delayed');
             }
+
+            if (lh_inst.extensionCommands.length > 0) {
+                lh_inst.extensionCommands.forEach(function(evt) {
+                    var iframe = document.getElementById('<?php echo $chatCSSPrefix?>_iframe');
+                    if (iframe !== null) {
+                        iframe.contentWindow.postMessage('lhc_load_ext:' + evt['ext'] + '::' + lh_inst.JSON.stringify(typeof evt['arg'] !== 'undefined' ? evt['arg'] : null), '*');
+                    }
+                });
+                lh_inst.extensionCommands = [];
+            }
+
     	} else if (action == 'lhc_continue_chat') {
     		lh_inst.showStartWindow();
         } else if (action == 'lhc_html_snippet') {
@@ -1069,8 +1107,6 @@ var lh_inst  = {
     		lh_inst.addTag({tag:e.data.split(':')[1]});
     	} else if (action == 'lhc_cfrefresh') {
     		lh_inst.refreshCustomFields();
-        } else if (action == 'lhc_eval') {
-            eval(e.data.split(':')[1]);
     	} else if (action == 'lhc_screenshot') {
     		lh_inst.makeScreenshot();
     	} else if (action == 'lhc_disable_survey') {
@@ -1130,7 +1166,22 @@ function preloadDataLHC() {
     var cookieData = lhc_Cookies('lhc_per');
 
     if ( typeof cookieData === "string" && cookieData) {
-        lh_inst.cookieDataPers = lh_inst.JSON.parse(cookieData);
+
+
+        if (cookieData.indexOf('|') !== -1) {
+            var contentReturn = {};
+            var parts = cookieData.split('|');
+
+            for (var i = 0; i < parts.length / 2; i++) {
+                contentReturn[parts[i * 2]] = parts[(i * 2) + 1];
+            }
+
+            lh_inst.cookieDataPers = contentReturn;
+
+        } else {
+            lh_inst.cookieDataPers = lh_inst.JSON.parse(cookieData);
+        }
+
         if (!lh_inst.cookieDataPers.vid) {
             lh_inst.cookieDataPers = {<?php isset($vid) ? print 'vid:\''.$vid.'\'' : ''?>};
             lh_inst.storePersistenCookie();

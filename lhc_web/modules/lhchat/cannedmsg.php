@@ -4,14 +4,18 @@ erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.cannedmsg', arra
 
 $tpl = erLhcoreClassTemplate::getInstance( 'lhchat/cannedmsg.tpl.php');
 
+
 /**
  * Append user departments filter
  * */
 $departmentParams = array();
 $userDepartments = erLhcoreClassUserDep::parseUserDepartmetnsForFilter($currentUser->getUserID());
 if ($userDepartments !== true){
-	$departmentParams['filterin']['department_id'] = $userDepartments;
-    $departmentParams['filterin']['department_id'][] = 0;
+    $departmentParams['filterin']['department_id'] = $userDepartments;
+
+   if ($currentUser->hasAccessTo('lhcannedmsg','see_global')) {
+       $departmentParams['filterin']['department_id'][] = 0;
+   }
 }
 
 if (is_numeric($Params['user_parameters_unordered']['id']) && $Params['user_parameters_unordered']['action'] == 'delete') {
@@ -32,6 +36,7 @@ if (is_numeric($Params['user_parameters_unordered']['id']) && $Params['user_para
             erLhcoreClassLog::logObjectChange(array(
                 'object' => $Msg,
                 'check_log' => true,
+                'action' => 'Delete',
                 'msg' => array(
                     'delete' => $Msg->getState(),
                     'user_id' => $currentUser->getUserID()
@@ -58,6 +63,12 @@ if (isset($_GET['doSearch'])) {
 erLhcoreClassChatStatistic::formatUserFilter($filterParams);
 
 $append = erLhcoreClassSearchHandler::getURLAppendFromInput($filterParams['input_form']);
+
+
+if (isset($_GET['export'])){
+    erLhcoreClassChatExport::exportCannedMessages(erLhcoreClassModelCannedMsg::getList(array_merge_recursive($filterParams['filter'],array('offset' => 0, 'limit' => false, 'sort' => 'id ASC'),$departmentParams)));
+}
+
 
 $pages = new lhPaginator();
 $pages->serverURL = erLhcoreClassDesign::baseurl('chat/cannedmsg') . $append;

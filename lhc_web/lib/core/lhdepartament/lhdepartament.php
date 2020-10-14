@@ -2,11 +2,6 @@
 
 class erLhcoreClassDepartament{
 
-   function __construct()
-   {
-
-   }
-
    public static function getDepartaments()
    {
          $db = ezcDbInstance::get();
@@ -34,7 +29,7 @@ class erLhcoreClassDepartament{
 	   	return array_merge($onlineDep,$offlineDep);
    }
 
-   public static function validateDepartment(erLhcoreClassModelDepartament & $department) {
+   public static function validateDepartment(erLhcoreClassModelDepartament & $department, $additionalParams = array()) {
    	
 	   	$definition = array(
 	   			'Name' => new ezcInputFormDefinitionElement(
@@ -82,7 +77,13 @@ class erLhcoreClassDepartament{
 	   			'inform_unread' => new ezcInputFormDefinitionElement(
 	   					ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
 	   			),
-	   			'nc_cb_execute' => new ezcInputFormDefinitionElement(
+	   			'off_op_exec' => new ezcInputFormDefinitionElement(
+	   					ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+	   			),
+                'ru_on_transfer' => new ezcInputFormDefinitionElement(
+	   					ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+	   			),
+                'nc_cb_execute' => new ezcInputFormDefinitionElement(
 	   					ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
 	   			),
 	   			'na_cb_execute' => new ezcInputFormDefinitionElement(
@@ -152,6 +153,9 @@ class erLhcoreClassDepartament{
                 'bot_only_offline' => new ezcInputFormDefinitionElement(
                         ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
                 ),
+                'bot_foh' => new ezcInputFormDefinitionElement(
+                        ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+                ),
                 'auto_delay_timeout' => new ezcInputFormDefinitionElement(
                         ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 1)
                 ),
@@ -160,6 +164,15 @@ class erLhcoreClassDepartament{
                 ),
                 'survey_id' => new ezcInputFormDefinitionElement(
                     ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 1)
+                ),
+                'attr_int_1' => new ezcInputFormDefinitionElement(
+                    ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 0)
+                ),
+                'attr_int_2' => new ezcInputFormDefinitionElement(
+                    ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 0)
+                ),
+                'attr_int_3' => new ezcInputFormDefinitionElement(
+                    ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 0)
                 )
         );
 
@@ -188,9 +201,13 @@ class erLhcoreClassDepartament{
                 ezcInputFormDefinitionElement::OPTIONAL, 'int',array('min_range' => 0, 'mx_range' => 60)
             );
         }
-		   	
-	   	
-	   	$form = new ezcInputForm( INPUT_POST, $definition );
+
+	   	 if (isset($additionalParams['payload_data'])) {
+            $form = new erLhcoreClassInputForm(INPUT_GET, $definition, null, $additionalParams['payload_data']);
+        } else {
+	   	    $form = new ezcInputForm( INPUT_POST, $definition );
+	   	 }
+
 	   	$Errors = array();
 	   	
 	   	if ( !$form->hasValidData( 'Name' ) || $form->Name == '' )
@@ -200,7 +217,7 @@ class erLhcoreClassDepartament{
 	   		$department->name = $form->Name;
 	   	}
 
-	   	if ( erLhcoreClassUser::instance()->hasAccessTo('lhdepartment','actautoassignment') ) {
+	   	if ((isset($additionalParams['payload_data']) && erLhcoreClassRestAPIHandler::hasAccessTo('lhdepartment', 'actautoassignment')) || erLhcoreClassUser::instance()->hasAccessTo('lhdepartment','actautoassignment') ) {
 		   	if ( $form->hasValidData( 'AutoAssignActive' ) && $form->AutoAssignActive == true )	{
 		   		$department->active_balancing = 1;
 		   	} else {
@@ -243,8 +260,10 @@ class erLhcoreClassDepartament{
 		   		$department->max_ac_dep_chats = 0;
 		   	}
 	   	}
-	   	
-	   	if ( erLhcoreClassUser::instance()->hasAccessTo('lhdepartment','actworkflow') ) {
+
+        $botConfiguration = $department->bot_configuration_array;
+
+	   	if ((isset($additionalParams['payload_data']) && erLhcoreClassRestAPIHandler::hasAccessTo('lhdepartment', 'actworkflow')) || erLhcoreClassUser::instance()->hasAccessTo('lhdepartment','actworkflow') ) {
 		   	if ( $form->hasValidData( 'TansferDepartmentID' ) )
 		   	{
 		   		$department->department_transfer_id = $form->TansferDepartmentID;
@@ -264,8 +283,22 @@ class erLhcoreClassDepartament{
 		   		$department->nc_cb_execute = 1;
 		   	} else {
 		   		$department->nc_cb_execute = 0;
+		   	}		   	
+
+		   	if ( $form->hasValidData( 'off_op_exec' ) && $form->off_op_exec == true )
+		   	{
+		   		$botConfiguration['off_op_exec'] = 1;
+		   	} else {
+                $botConfiguration['off_op_exec'] = 0;
 		   	}
 		   	
+		   	if ( $form->hasValidData( 'ru_on_transfer' ) && $form->ru_on_transfer == true )
+		   	{
+		   		$botConfiguration['ru_on_transfer'] = 1;
+		   	} else {
+                $botConfiguration['ru_on_transfer'] = 0;
+		   	}
+
 		   	if ( $form->hasValidData( 'na_cb_execute' ) && $form->na_cb_execute == true )
 		   	{
 		   		$department->na_cb_execute = 1;
@@ -291,6 +324,21 @@ class erLhcoreClassDepartament{
 	   		$department->pending_max = $form->pending_max;
 	   	} else {
 	   		$department->pending_max = 0;
+	   	}
+
+	   	if ( $form->hasValidData( 'attr_int_1' ) )
+	   	{
+	   		$department->attr_int_1 = $form->attr_int_1;
+	   	}
+
+	   	if ( $form->hasValidData( 'attr_int_2' ) )
+	   	{
+	   		$department->attr_int_2 = $form->attr_int_2;
+	   	}
+
+	   	if ( $form->hasValidData( 'attr_int_3' ) )
+	   	{
+	   		$department->attr_int_3 = $form->attr_int_3;
 	   	}
 	   	
 	   	if ( $form->hasValidData( 'Email' ) ) {	   	
@@ -363,7 +411,7 @@ class erLhcoreClassDepartament{
 	   	if ($form->hasValidData( 'inform_unread_delay' )) {
 	   		$department->inform_unread_delay = $form->inform_unread_delay;
 	   	} elseif ($department->inform_unread == 1) {
-	   		$Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Minimum 5 seconds');
+	   		$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Minimum 5 seconds');
 	   	} else {
 	   		$department->inform_unread_delay = 0;
 	   	}
@@ -470,8 +518,6 @@ class erLhcoreClassDepartament{
            $department->departament_products_id = array();
        }
 
-       $botConfiguration = array();
-
        if ( $form->hasValidData( 'bot_id' ) )
        {
            $botConfiguration['bot_id'] = $form->bot_id;
@@ -479,13 +525,14 @@ class erLhcoreClassDepartament{
            $botConfiguration['bot_id'] = 0;
        }
 
-
        if ( $form->hasValidData( 'bot_tr_id' ) )
        {
            $botConfiguration['bot_tr_id'] = $form->bot_tr_id;
+       } else {
+           $botConfiguration['bot_tr_id'] = 0;
        }
 
-       if (erLhcoreClassUser::instance()->hasAccessTo('lhdepartment', 'managesurvey')) {
+       if ((isset($additionalParams['payload_data']) && erLhcoreClassRestAPIHandler::hasAccessTo('lhdepartment', 'managesurvey')) || erLhcoreClassUser::instance()->hasAccessTo('lhdepartment', 'managesurvey')) {
            if ($form->hasValidData('survey_id')) {
                $botConfiguration['survey_id'] = $form->survey_id;
            } else {
@@ -497,6 +544,12 @@ class erLhcoreClassDepartament{
            $botConfiguration['bot_only_offline'] = true;
        } else {
            $botConfiguration['bot_only_offline'] = false;
+       }
+
+       if ( $form->hasValidData( 'bot_foh' ) ) {
+           $botConfiguration['bot_foh'] = true;
+       } else {
+           $botConfiguration['bot_foh'] = false;
        }
 
        if ( $form->hasValidData( 'auto_delay_timeout' ) ) {

@@ -72,7 +72,7 @@ gulp.task('react', function () {
 	])
         .pipe(sourcemaps.init())
         .pipe(babel({
-            presets: ["react", "es2015"]
+            presets: ["react", "@babel/preset-env"]
         }))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest("design/defaulttheme/js/react/build"));
@@ -84,7 +84,7 @@ gulp.task('react-components', function () {
 	])
 	.pipe(sourcemaps.init())
 	.pipe(babel({
-		presets: ["react", "es2015"]
+		presets: ["@babel/react", "@babel/preset-env"]
 	}))
 	.pipe(sourcemaps.write('.'))
 	.pipe(gulp.dest("design/defaulttheme/js/react/build/components"));
@@ -96,8 +96,8 @@ gulp.task('react-js',  function() {
 
     return browserify('design/defaulttheme/js/react/src/index.jsx')
         .transform("babelify", {
-        	presets: ["react", "es2015", "stage-0"],
-            plugins: ['react-html-attrs', 'transform-class-properties', 'transform-decorators-legacy']
+        	presets: ["@babel/preset-react", "@babel/preset-env"],
+            plugins: ['react-html-attrs', 'transform-class-properties', ["@babel/plugin-proposal-decorators", { "legacy": true}]]
         })
         .bundle()
         .on('error', gutil.log)
@@ -166,6 +166,13 @@ gulp.task('js-lh', function() {
 	.pipe(gulp.dest('design/defaulttheme/js'));
 });
 
+gulp.task('js-static', function() {
+    var stylePath = ['design/defaulttheme/js/js_static/*'];
+    return gulp.src(stylePath)
+        .pipe(uglify())
+        .pipe(gulp.dest('design/defaulttheme/js/js_static'));
+});
+
 gulp.task('js-lh-canned', function() {
 	var stylePath = ['design/defaulttheme/js/lh.cannedmsg.js'];
 	
@@ -185,23 +192,22 @@ gulp.task('js-lh-dashboard', function() {
 
 gulp.task('js-colorpicker', function() {
 	var stylePath = ['design/defaulttheme/js/color-picker.js'];
-	return gulp.src(stylePath)
-
-	.pipe(concat('color-picker.min.js'))
+	return gulp.src(stylePath).pipe(concat('color-picker.min.js'))
     .pipe(babel({
-            presets: ['es2015']
+            presets: ['@babel/preset-env']
         }))
 	.pipe(uglify({mangle: false, ecma: 5}))
 	.pipe(gulp.dest('design/defaulttheme/js'));
 });
 
-gulp.task('js-lh-npm', function() {		 
+gulp.task('js-lh-npm', function(done) {
 	 webpack(webpackConfig, function(err, stats) {
 	        if(err) throw new gutil.PluginError("webpack", err);
 	        gutil.log("[webpack]", stats.toString({
 	            // output options
 	        }));	            	
 	 });
+	 done();
 });
 
 gulp.task('bower', function() {
@@ -245,13 +251,9 @@ gulp.task('js-cobrowse',gulp.series('js-cobrowse-operator','js-cobrowse-visitor'
 //bower setup
 gulp.task('bower-setup');
 
-gulp.task('default', gulp.series('js-lh-dashboard','js-cobrowse-operator','js-cobrowse-visitor','js-angular-main','js-main-fileupload','js-datepicker','js-colorpicker','js-lhc-speak-js','js-lh','js-lh-canned','js-angular-checkmodel','js-angular-online','js-lh-npm', function() {
-	// Just execute all the tasks	
-}));
+gulp.task('default', gulp.series('js-lh-dashboard','js-cobrowse-operator','js-cobrowse-visitor','js-angular-main','js-main-fileupload','js-datepicker','js-colorpicker','js-lhc-speak-js','js-lh','js-lh-canned','js-angular-checkmodel','js-angular-online','js-lh-npm'));
 
-gulp.task('webpack', gulp.series('js-lh-npm', function() {
-	// Just execute all the tasks	
-}));
+gulp.task('webpack', gulp.series('js-lh-npm'));
 
 gulp.task('watch', function () {
 	gulp.watch('design/defaulttheme/js/cobrowse/*.js', ['js-cobrowse-visitor','js-cobrowse-operator']);	

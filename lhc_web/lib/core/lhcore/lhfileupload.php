@@ -94,25 +94,31 @@ class erLhcoreClassFileUpload extends UploadHandler
 
                 // Format message
                 $msg = new erLhcoreClassModelmsg();
-                $msg->msg = '[file=' . $file->id . '_' . md5($fileUpload->name . '_' . $fileUpload->chat_id) . ']';
+                $msg->msg = '[file=' . $file->id . '_' . $fileUpload->security_hash . ']';
                 $msg->chat_id = $chat->id;
                 $msg->user_id = isset($this->options['user_id']) ? $this->options['user_id'] : 0;
-                if ($msg->user_id > 0 && isset($this->options['name_support'])) {
-                    $msg->name_support = (string)$this->options['name_support'];
+
+                // We save instantly as message only visitors files
+                if ($msg->user_id == 0) {
+
+                    $chat->last_user_msg_time = $msg->time = time();
+
+                    erLhcoreClassChat::getSession()->save($msg);
+
+                    // Set last message ID
+                    if ($chat->last_msg_id < $msg->id) {
+                        $chat->last_msg_id = $msg->id;
+                    }
+
+                    if ($chat->gbot_id > 0 && (!isset($chat->chat_variables_array['gbot_disabled']) || $chat->chat_variables_array['gbot_disabled'] == 0)) {
+                        erLhcoreClassGenericBotWorkflow::userMessageAdded($chat, $msg);
+                    }
+
+                    $chat->has_unread_messages = 1;
+                    $chat->updateThis(array('update' => array('last_user_msg_time','last_msg_id','has_unread_messages')));
+
+                    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.addmsguser',array('file' => $fileUpload, 'msg' => & $msg, 'chat' => & $chat));
                 }
-                $chat->last_user_msg_time = $msg->time = time();
-
-                erLhcoreClassChat::getSession()->save($msg);
-
-                // Set last message ID
-                if ($chat->last_msg_id < $msg->id) {
-                    $chat->last_msg_id = $msg->id;
-                }
-
-                $chat->has_unread_messages = 1;
-                $chat->updateThis();
-
-                erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.web_add_msg_admin', array('msg' => & $msg, 'chat' => & $chat));
             }
 
             $this->uploadedFile = $fileUpload;

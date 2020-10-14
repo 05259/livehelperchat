@@ -24,8 +24,12 @@
             <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/html.tpl.php'));?>
         <?php elseif ($type == 'html_snippet') : ?>
             <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/html_snippet.tpl.php'));?>
+        <?php elseif ($type == 'execute_js') : ?>
+            <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/execute_js.tpl.php'));?>
         <?php elseif ($type == 'video') : ?>
             <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/video.tpl.php'));?>
+        <?php elseif ($type == 'text_conditional') : ?>
+            <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/text_conditional.tpl.php'));?>
         <?php elseif ($type == 'attr_options' && (!isset($messagesStats) || $messagesStats['total_messages'] == $messagesStats['counter_messages'])) : ?>
             <?php include(erLhcoreClassDesign::designtpl('lhgenericbot/message/content/attr_options.tpl.php'));?>
         <?php endif; ?>

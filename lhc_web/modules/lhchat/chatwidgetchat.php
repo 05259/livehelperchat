@@ -12,9 +12,16 @@ if ((string)$Params['user_parameters_unordered']['mode'] == 'embed') {
 	$modeAppend = '/(mode)/embed';
 }
 
+$noMobile = false;
+if ((string)$Params['user_parameters_unordered']['mobile'] == 'false') {
+    $modeAppend .= '/(mobile)/false';
+    $noMobile = true;
+}
+
 if (isset($Params['user_parameters_unordered']['theme']) && (int)$Params['user_parameters_unordered']['theme'] > 0){
 	try {
 		$theme = erLhAbstractModelWidgetTheme::fetch($Params['user_parameters_unordered']['theme']);
+        $theme->translate();
 		$Result['theme'] = $theme;
 		$tpl->set('theme',$theme);
 		$modeAppend .= '/(theme)/'.$theme->id;
@@ -75,18 +82,16 @@ try {
             $chat->support_informed = 1;
             $chat->user_typing = time();// Show for shorter period these status messages
             $chat->is_user_typing = 1;
-            if (isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] != ''){
-                
-                $refererSite = $_SERVER['HTTP_REFERER'];
-                
-                if ($refererSite != '' && strlen($refererSite) > 50) {
+            if (($refererSite = erLhcoreClassModelChatOnlineUser::getReferer()) != '') {
+
+                if (strlen($refererSite) > 50) {
                     if ( function_exists('mb_substr') ) {
                         $refererSite = mb_substr($refererSite, 0, 50);
                     } else {
                         $refererSite = substr($refererSite, 0, 50);
                     }
                 }
-                
+
                 $chat->user_typing_txt = $refererSite;
             } else {
                 $chat->user_typing_txt = htmlspecialchars_decode(erTranslationClassLhTranslation::getInstance()->getTranslation('chat/userjoined','Visitor has joined the chat!'),ENT_QUOTES);
@@ -118,8 +123,19 @@ try {
                 $chat->unanswered_chat = 0;
             }
             
-            erLhcoreClassChat::getSession()->update($chat);
-        }        
+            $chat->updateThis(array('update' => array(
+                'unanswered_chat',
+                'operation_admin',
+                'nick',
+                'user_status',
+                'has_unread_op_messages',
+                'unread_op_messages_informed',
+                'user_typing_txt',
+                'support_informed',
+                'user_typing',
+                'is_user_typing'
+            )));
+        }
 
         $db->commit();
 
@@ -149,6 +165,10 @@ $Result['dynamic_height'] = true;
 $Result['dynamic_height_message'] = 'lhc_sizing_chat';
 $Result['path'] = array(array('title' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/chat','Chat started')));
 $Result['is_sync_required'] = true;
+
+if ($noMobile === true) {
+    $Result['no_mobile_css'] = true;
+}
 
 if ($embedMode == true) {
 	$Result['dynamic_height_message'] = 'lhc_sizing_chat_page';

@@ -14,15 +14,14 @@ if (trim($form->msg) != '')
 	$db->beginTransaction();	
 	try {
 		$Chat = erLhcoreClassChat::getSession()->load( 'erLhcoreClassModelChat', $Params['user_parameters']['chat_id']);
-						
-	    // Has access to read, chat
-	    //FIXME create permission to add message...
+
+
 	    if ($Chat instanceof erLhcoreClassModelChat && erLhcoreClassChat::hasAccessToRead($Chat) )
 	    {
 	        $currentUser = erLhcoreClassUser::instance();
 	
 	        if (!isset($_SERVER['HTTP_X_CSRFTOKEN']) || !$currentUser->validateCSFRToken($_SERVER['HTTP_X_CSRFTOKEN'])) {
-	        	echo erLhcoreClassChat::safe_json_encode(array('error' => 'true', 'result' => 'Invalid CSRF Token' ));
+	        	echo erLhcoreClassChat::safe_json_encode(array('error' => 'true', 'r' => 'Try again or refresh a page. Invalid CSRF Token.' ));
 	        	$db->rollback();
 	        	exit;
 	        }
@@ -101,7 +100,7 @@ if (trim($form->msg) != '')
     	                }
                     }
 
-    	        	$stmt = $db->prepare('UPDATE lh_chat SET status = :status, user_status = :user_status, last_msg_id = :last_msg_id, last_op_msg_time = :last_op_msg_time, has_unread_op_messages = :has_unread_op_messages, unread_op_messages_informed = :unread_op_messages_informed' . $statusSub . ' WHERE id = :id');
+    	        	$stmt = $db->prepare('UPDATE lh_chat SET  user_id = :user_id, status_sub = :status_sub, status = :status, user_status = :user_status, last_msg_id = :last_msg_id, last_op_msg_time = :last_op_msg_time, has_unread_op_messages = :has_unread_op_messages, unread_op_messages_informed = :unread_op_messages_informed' . $statusSub . ' WHERE id = :id');
     	        	$stmt->bindValue(':id',$Chat->id,PDO::PARAM_INT);
     	        	$stmt->bindValue(':last_msg_id',$msg->id,PDO::PARAM_INT);
     	        	$stmt->bindValue(':last_op_msg_time',time(),PDO::PARAM_INT);
@@ -110,7 +109,8 @@ if (trim($form->msg) != '')
     	        	
     	        	if ($userData->invisible_mode == 0 && $messageUserId > 0) { // Change status only if it's not internal command
     		        	if ($Chat->status == erLhcoreClassModelChat::STATUS_PENDING_CHAT) {
-    		        		$Chat->status = erLhcoreClassModelChat::STATUS_ACTIVE_CHAT;  
+    		        		$Chat->status = erLhcoreClassModelChat::STATUS_ACTIVE_CHAT;
+                            $Chat->status_sub = erLhcoreClassModelChat::STATUS_SUB_OWNER_CHANGED;
     		        		$Chat->user_id = $messageUserId;
     		        	}
     	        	}
@@ -126,7 +126,9 @@ if (trim($form->msg) != '')
     	        	
     	        	$stmt->bindValue(':user_status',$Chat->user_status,PDO::PARAM_INT);
     	        	$stmt->bindValue(':status',$Chat->status,PDO::PARAM_INT);
-    	        	$stmt->execute();	        	
+                    $stmt->bindValue(':status_sub',$Chat->status_sub,PDO::PARAM_INT);
+                    $stmt->bindValue(':user_id',$Chat->user_id,PDO::PARAM_INT);
+                    $stmt->execute();
     	        }
 
     	        // If chat is in bot mode and operators writes a message, accept a chat as operator.
@@ -138,13 +140,22 @@ if (trim($form->msg) != '')
                         $Chat->refreshThis();
                         $Chat->status = erLhcoreClassModelChat::STATUS_ACTIVE_CHAT;
 
-                        $Chat->wait_time = time() - ($Chat->pnd_time > 0 ? $Chat->pnd_time : $Chat->time);
+                        $Chat->pnd_time = time();
+                        $Chat->wait_time = 2;
+
                         $Chat->user_id = $currentUser->getUserID();
 
                         // User status in event of chat acceptance
                         $Chat->usaccept = $userData->hide_online;
                         $Chat->operation_admin .= "lhinst.updateVoteStatus(".$Chat->id.");";
                         $Chat->saveThis();
+
+                        // If chat is transferred to pending state we don't want to process any old events
+                        $eventPending = erLhcoreClassModelGenericBotChatEvent::findOne(array('filter' => array('chat_id' => $Chat->id)));
+
+                        if ($eventPending instanceof erLhcoreClassModelGenericBotChatEvent) {
+                            $eventPending->removeThis();
+                        }
 
                         erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.data_changed',array('chat' => & $Chat, 'user' => $currentUser));
 
@@ -188,7 +199,7 @@ if (trim($form->msg) != '')
 	    } else {
 	        throw new Exception('You cannot read this chat!');
         }
-	     	    
+
 	    $db->commit();
 	    
 	} catch (Exception $e) {
@@ -197,7 +208,7 @@ if (trim($form->msg) != '')
     }
 
 } else {
-    echo erLhcoreClassChat::safe_json_encode(array('error' => 'true'));
+    echo erLhcoreClassChat::safe_json_encode(array('error' => 'true', 'r' => 'Please enter a message...'));
 }
 
 

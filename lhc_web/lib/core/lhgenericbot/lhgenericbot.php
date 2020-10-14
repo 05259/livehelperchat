@@ -14,13 +14,13 @@ class erLhcoreClassGenericBot {
         return self::$persistentSession;
     }
 
-    public static function validateBot(& $bot) {
+    public static function validateBot(& $bot, $additionalParams = array()) {
 
         $definition = array(
-            'Name' => new ezcInputFormDefinitionElement(
+            'name' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
             ),
-            'Nick' => new ezcInputFormDefinitionElement(
+            'nick' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
             ),
             'attr_str_1' => new ezcInputFormDefinitionElement(
@@ -38,21 +38,35 @@ class erLhcoreClassGenericBot {
             'bot_id' => new ezcInputFormDefinitionElement(
                 ezcInputFormDefinitionElement::OPTIONAL, 'int',null, FILTER_REQUIRE_ARRAY
             ),
+            'profile_hide' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+            ),
+            'msg_hide' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
+            ),
+            'configuration' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+            )
         );
 
-        $form = new ezcInputForm( INPUT_POST, $definition );
+        if (isset($additionalParams['payload_data'])) {
+            $form = new erLhcoreClassInputForm(INPUT_GET, $definition, null, $additionalParams['payload_data']);
+        } else {
+            $form = new ezcInputForm( INPUT_POST, $definition );
+        }
+        
         $Errors = array();
 
-        if ( !$form->hasValidData( 'Name' ) || $form->Name == '' ) {
+        if ( !$form->hasValidData( 'name' ) || $form->name == '' ) {
             $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please enter bot name!');
         } else {
-            $bot->name = $form->Name;
+            $bot->name = $form->name;
         }
 
-        if ( !$form->hasValidData( 'Nick' ) || $form->Nick == '' ) {
+        if ( !$form->hasValidData( 'nick' ) || $form->nick == '' ) {
             $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please enter bot nick!');
         } else {
-            $bot->nick = $form->Nick;
+            $bot->nick = $form->nick;
         }
 
         if ( $form->hasValidData( 'attr_str_1' ) ) {
@@ -87,8 +101,105 @@ class erLhcoreClassGenericBot {
             $configurationArray['bot_id'] = array();
         }
 
+        if ( $form->hasValidData( 'profile_hide' ) ) {
+            $configurationArray['profile_hide'] = true;
+        } else {
+            $configurationArray['profile_hide'] = false;
+        }
+
+        if ( $form->hasValidData( 'msg_hide' ) ) {
+            $configurationArray['msg_hide'] = true;
+        } else {
+            $configurationArray['msg_hide'] = false;
+        }
+
+        if ( $form->hasInputField( 'configuration' ) && $form->hasValidData('configuration') ) {
+            $configurationUpdate = json_decode($form->configuration,true);
+            if (is_array($configurationUpdate)) {
+                $configurationArray = array_merge($configurationArray, $configurationUpdate);
+            }
+        }
+
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('bot.validate',array('bot' => & $bot, 'configuration_array' => & $configurationArray, 'additional_params' => $additionalParams));
+        
         $bot->configuration_array = $configurationArray;
         $bot->configuration = json_encode($configurationArray);
+
+        return $Errors;
+    }
+
+    public static function validateBotPhotoPayload(& $userData, $params = array()) {
+        $Errors = false;
+
+        if (isset($params["payload"]['image']) && !empty($params["payload"]['image'])) {
+
+            $imgDataItem = base64_decode($params["payload"]['image']);
+
+            $imagesize = getimagesizefromstring($imgDataItem);
+
+            if ($imagesize !== false && isset($imagesize['mime'])){
+                $mimetype = $imagesize['mime'];
+            } elseif(class_exists('finfo')) {
+                $finfo    = new finfo(FILEINFO_MIME);
+                $mimetype = $finfo->buffer($imgDataItem);
+            }
+
+            $extensionMimetype = array(
+                'image/jpeg' => 'jpg',
+                'image/jpg' => 'jpg',
+                'image/png' => 'png'
+            );
+
+            if (!key_exists($mimetype,$extensionMimetype)){
+                return;
+            }
+
+            $dir = 'var/tmpfiles/';
+            $fileName = 'data' . '.' . $extensionMimetype[$mimetype];
+
+            erLhcoreClassChatEventDispatcher::getInstance()->dispatch('theme.temppath',array('dir' => & $dir));
+
+            erLhcoreClassFileUpload::mkdirRecursive( $dir );
+
+            $imgPath = $dir . $fileName;
+            file_put_contents($imgPath, $imgDataItem);
+
+            if (erLhcoreClassImageConverter::isPhotoLocal($imgPath)) {
+
+                $Errors = array();
+
+                $path = isset($params['path']) ? $params['path'] : 'var/botphoto/';
+
+                $dir = $path . date('Y') . 'y/' . date('m') . '/' . date('d') .'/' . $userData->id . '/';
+
+                erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.edit.photo_path',array('dir' => & $dir, 'storage_id' => $userData->id));
+
+                erLhcoreClassFileUpload::mkdirRecursive( $dir );
+
+                $fileName = erLhcoreClassSearchHandler::moveLocalFile($imgPath, $dir . '/','.' );
+
+                if ( !empty($file["errors"]) ) {
+                    foreach ($file["errors"] as $err) {
+                        $Errors[] = $err;
+                    }
+                } else {
+                    $userData->removeFile();
+                    $userData->filename	= $fileName;
+                    $userData->filepath	= $dir;
+
+                    $response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.edit.photo_resize_150', array('mime_type' => $extensionMimetype[$mimetype], 'user' => $userData));
+
+                    if ($response === false) {
+                        erLhcoreClassImageConverter::getInstance()->converter->transform( 'photow_150', $userData->file_path_server, $userData->file_path_server);
+                        chmod($userData->file_path_server, 0644);
+                    }
+                }
+
+            } else {
+                unlink($imgPath);
+            }
+
+        }
 
         return $Errors;
     }
@@ -136,6 +247,44 @@ class erLhcoreClassGenericBot {
                     chmod($userData->file_path_server, 0644);
                 }
             }
+        }
+
+        return $Errors;
+    }
+
+    public static function validateBotRestAPI(& $botRestAPI)
+    {
+        $definition = array(
+            'name' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+            ),
+            'description' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+            ),
+            'configuration' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
+            ),
+        );
+
+        $form = new ezcInputForm( INPUT_POST, $definition );
+        $Errors = array();
+
+        if ( !$form->hasValidData( 'name' ) || $form->name == '' ) {
+            $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please enter Rest API Name!');
+        } else {
+            $botRestAPI->name = $form->name;
+        }
+
+        if ( $form->hasValidData( 'description' )  ) {
+            $botRestAPI->description = $form->description;
+        } else {
+            $botRestAPI->description = '';
+        }
+        
+        if ( $form->hasValidData( 'configuration' )  ) {
+            $botRestAPI->configuration = preg_replace('/(,?)\"\$\$hashKey\":\"object:([0-9]+)\"/','',$form->configuration);
+        } else {
+            $botRestAPI->configuration = '';
         }
 
         return $Errors;
@@ -283,6 +432,54 @@ class erLhcoreClassGenericBot {
 
         return $Errors;
     }
+
+    public static function validateBotCommand(& $botCommand)
+    {
+        $definition = array(
+            'command' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'string'
+            ),
+            'bot_id' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL,'int', array('min_range' => 1)
+            ),
+            'AbstractInput_trigger_id' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 1)
+            ),
+            'dep_id' => new ezcInputFormDefinitionElement(
+                ezcInputFormDefinitionElement::OPTIONAL, 'int', array('min_range' => 1)
+            )
+        );
+        
+        $form = new ezcInputForm( INPUT_POST, $definition );
+        $Errors = array();
+
+        if ( !$form->hasValidData( 'command' ) || $form->command == '' ) {
+            $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please enter a command!');
+        } else {
+            $botCommand->command = $form->command;
+        }
+
+        if ( $form->hasValidData( 'bot_id' ) ) {
+            $botCommand->bot_id = $form->bot_id;
+        } else {
+            $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please choose a bot!');
+        }
+
+        if ( $form->hasValidData( 'AbstractInput_trigger_id' ) ) {
+            $botCommand->trigger_id = $form->AbstractInput_trigger_id;
+        } else {
+            $Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('departament/edit','Please choose a trigger!');
+        }
+
+        if ( $form->hasValidData( 'dep_id' ) ) {
+            $botCommand->dep_id = $form->dep_id;
+        } else {
+            $botCommand->dep_id = 0;
+        }
+
+        return $Errors;
+    }
+
     private static $persistentSession;
 }
 

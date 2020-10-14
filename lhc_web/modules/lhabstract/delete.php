@@ -1,5 +1,7 @@
 <?php
 
+erLhcoreClassChatEventDispatcher::getInstance()->dispatch('abstract.delete_'.strtolower($Params['user_parameters']['identifier']).'_general', array());
+
 if (!$currentUser->validateCSFRToken($Params['user_parameters_unordered']['csfr'])) {
 	die('Invalid CSFR Token');
 	exit;
@@ -26,6 +28,7 @@ $ObjectData->removeThis();
 erLhcoreClassLog::logObjectChange(array(
     'object' => $ObjectData,
     'check_log' => true,
+    'action' => 'Delete',
     'msg' => array(
         'delete' => $ObjectData->getState(),
         'user_id' => $currentUser->getUserID()

@@ -1,6 +1,6 @@
 <?php include(erLhcoreClassDesign::designtpl('lhsystem/configuration_links/users_section_pre.tpl.php'));?>
 <?php if ($system_configuration_links_users_section_enabled == true) : ?>
-<div class="col-md-6">
+
   	<?php if ($currentUser->hasAccessTo('lhuser','userlist') || $currentUser->hasAccessTo('lhuser','grouplist') || $currentUser->hasAccessTo('lhpermission','list')) : ?>
 	  	<h4><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('system/configuration','Users');?></h4>
 		<ul class="circle small-list">
@@ -32,12 +32,12 @@
 	 <?php endif; ?>
 	 	 
 
-	 <?php if ($currentUser->hasAccessTo('lhsystem','use')) : ?>
+	 <?php if ($currentUser->hasAccessTo('lhsystem','usersactions')) : ?>
 	 <h4><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('system/configuration','Advanced');?></h4>
      <ul class="circle small-list">
         <li><a href="<?php echo erLhcoreClassDesign::baseurl('system/usersactions')?>"><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('system/configuration','Users actions');?></a></li>
      </ul>
     <?php endif; ?>
 
- </div>
+
  <?php endif;?>
